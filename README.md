@@ -5,7 +5,7 @@ A Python-based web scraper using Selenium to gather domain names across multiple
 
 This project is provided for **educational purposes only**. The creators and contributors of this project are not responsible for any misuse or illegal activities performed with this code.
 
-The script involves manual CAPTCHA solving and doesn’t use automated CAPTCHA-solving services or tools,as it generally doesn’t cross the same legal lines. CAPTCHAs exist to verify that a human is interacting with the website. As long as a human (you) is solving the CAPTCHA, it may considered that you're complying with the spirit of the CAPTCHA. Please use it at your own risk.
+The script involves manual CAPTCHA solving and doesn’t use automated CAPTCHA-solving services or tools,as it generally doesn’t cross the same legal lines. CAPTCHAs exist to verify that a human is interacting with the website. As long as a human (you) is solving the CAPTCHA, it may considered that you're complying with the spirit of the CAPTCHA. 
 
 Even though manual CAPTCHA solving may not violate major laws directly, you still need to be aware of these scenarios:
 
