@@ -20,7 +20,7 @@ pip install requests
 
 3. Update these portions of the code to reflect the target tlds  gov sites exclusions and country name you querying: 
 
-I'm using iran tlds that ends with .ir and excluding their gov sites.
+I'm using iran tlds that ends with .ir and excluding their gov sites. Complete list of those tlds for each country can be found at https://whoisdatacenter.com/country/ 
 
 ```
 # List of TLDs to search
