@@ -1,5 +1,21 @@
-# TLD-Domain-Scraper
+# Python-based Web Scraper for Tracking Domains by TLD (TLD-Domain-Scraper)
 A Python-based web scraper using Selenium to gather domain names across multiple Top-Level Domains (TLDs) from search engine results.
+
+## Overview
+The idea is to build a Python-based web scraper using Selenium to collect and maintain a list of domain names across multiple Top-Level Domains (TLDs),and country-specific TLDs like .uk, .fr, .ru, etc. These domain lists can then be used for scraping relevant websites that report or publish information on political changes, events, or disease outbreaks.
+
+### Application Areas
+
+By targeting specific TLDs and excluding certain government websites (to avoid regulatory or policy conflicts), this tool can build a comprehensive dataset of news websites, blogs, government portals, and NGOs that are likely to provide real-time information on rapidly changing events.
+Application Areas
+
+- Monitoring Political Changes:
+Elections, protests, policy changes, or international relations often generate a significant amount of online discussion, with articles, reports, and press releases published across many different TLDs.
+- Tracking Events or Natural Disasters:
+Natural disasters, including earthquakes, floods, and hurricanes, often lead to a spike in online reporting. Local news websites, emergency portals, and community blogs may provide early warnings, first-hand accounts, or official updates.Scraping domains in regions frequently affected by natural disasters (e.g., .au for Australia, .jp for Japan) can enable automated monitoring of related information.
+- Following Disease Outbreaks:
+Epidemics and pandemics, such as the recent COVID-19 outbreak, produce immense amounts of information from government health agencies, international organizations (e.g., WHO), research institutions, and news outlets. Additionallym different countries may have official health portals.
+
 
 ## Dependencies
 
