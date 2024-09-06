@@ -1,6 +1,21 @@
 # TLD-Domain-Scraper
 A Python-based web scraper using Selenium to gather domain names across multiple Top-Level Domains (TLDs) from search engine results.
 
+## Dependencies
+
+```
+pip install selenium
+pip install requests
+```
+
+We need a browser driver, such as ChromeDriver for Google Chrome.
+
+```
+dnf install chromedriver chrom-browser -y
+```
+
+
+
 ## Disclaimer
 
 This project is provided for **educational purposes only**. The creators and contributors of this project are not responsible for any misuse or illegal activities performed with this code.
