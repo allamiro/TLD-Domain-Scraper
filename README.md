@@ -3,17 +3,20 @@ A Python-based web scraper using Selenium to gather domain names across multiple
 
 ## Dependencies
 
+
+1. We need a browser driver, such as ChromeDriver for Google Chrome.
+
+```
+dnf install python3 python3-devel chromedriver chrom-browser -y
+```
+
+
+2. Install python libraries
+
 ```
 pip install selenium
 pip install requests
 ```
-
-We need a browser driver, such as ChromeDriver for Google Chrome.
-
-```
-dnf install chromedriver chrom-browser -y
-```
-
 
 
 ## Disclaimer
