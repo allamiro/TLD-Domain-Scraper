@@ -2,7 +2,7 @@
 A Python-based web scraper using Selenium to gather domain names across multiple Top-Level Domains (TLDs) from search engine results.
 
 ## Overview
-The idea is to build a Python-based web scraper using Selenium to collect and maintain a list of domain names across multiple Top-Level Domains (TLDs),and country-specific TLDs like .uk, .fr, .ru, etc. These domain lists can then be used for scraping relevant websites that report or publish information on political changes, events, or disease outbreaks.
+The idea is to build a Python-based web scraper using Selenium to collect and maintain a list of domain names across multiple Top-Level Domains (TLDs), and country-specific TLDs for example .uk, .fr, .ru, etc. These domain lists can then be used for scraping relevant websites that report or publish information on political changes, events, or disease outbreaks.
 
 ### Application Areas
 
