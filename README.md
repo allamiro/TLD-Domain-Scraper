@@ -18,6 +18,43 @@ pip install selenium
 pip install requests
 ```
 
+3. Update these portions of the code to reflect the target tlds  gov sites exclusions and country name you querying: 
+
+I'm using iran tlds that ends with .ir and excluding their gov sites.
+
+```
+# List of TLDs to search
+tlds = [
+    ".IR",
+    ".PERSIANBLOG.IR",
+    ".RZB.IR",
+    ".CO.IR",
+    ".AC.IR",
+    ".SCH.IR",
+    ".ORG.IR",
+    ".ID.IR",
+    ".R98.IR",
+    ".EPAGE.IR"
+]
+
+# Base query excluding .gov.ir domains
+base_query = "-site:.gov.ir"
+
+```
+
+
+```
+if href and tld.lower() in href.lower() and '.gov.ir' not in href and 'translate.google.com' not in href:
+
+```
+
+
+
+```
+filename = f"iran_{tld_clean}.txt"
+
+```
+
 
 ## Disclaimer
 
