@@ -8,15 +8,11 @@ from urllib.parse import urlparse
 import time
 import random
 
-# Path to ChromeDriver and Google Chrome binary
+# Chrome Driver options
 chrome_driver_path = "/usr/bin/chromedriver"
 chrome_binary_path = "/usr/bin/google-chrome"  # Adjust this if necessary
-
-# Set up Chrome options to specify the Chrome binary path
 chrome_options = Options()
 chrome_options.binary_location = chrome_binary_path
-
-# Set up the Service object for ChromeDriver
 service = Service(executable_path=chrome_driver_path)
 
 # Initialize the WebDriver with the service and options
