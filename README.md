@@ -16,6 +16,11 @@ Natural disasters, including earthquakes, floods, and hurricanes, often lead to 
 - Following Disease Outbreaks:
 Epidemics and pandemics, such as the recent COVID-19 outbreak, produce immense amounts of information from government health agencies, international organizations (e.g., WHO), research institutions, and news outlets. Additionallym different countries may have official health portals.
 
+- Deetect Cyber threats:
+  Identify which domains correlate with Cyber threats and bad actors 
+
+- Academic Research:
+
 ### Plan
 1. Create a list of domain names across various Top-Level Domains (TLDs) by using the Python-based web scraper
 2. Process those websites and extract meaningful information: This involves scraping individual pages, organizing the collected data, and preparing it for analysis or indexing into a search engine or analytics platform.
