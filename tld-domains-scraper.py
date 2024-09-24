@@ -70,7 +70,7 @@ for tld in tlds:
     driver.get(url)
     time.sleep(2)  # Allow the page to load
     
-    # Loop through multiple pages (set to 30 pages)
+
     for page in range(30):  # Adjust this number to match the total number of pages
         # Detect CAPTCHA and pause for manual solving
         if is_captcha_present():
@@ -90,7 +90,6 @@ for tld in tlds:
                 print(f"Adding domain: {base_domain}")  # Log the added domain
                 domain_list.add(base_domain)
         
-        # Check for the 'Next' button
         next_button = is_next_button_present()
         
         if next_button:
@@ -116,5 +115,5 @@ for tld in tlds:
 
     print(f"\nDomains for {tld} have been saved to {filename}")
 
-# Close the WebDriver
+
 driver.quit()
