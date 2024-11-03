@@ -55,6 +55,10 @@ pip install requests
 I'm using iran tlds that ends with .ir and excluding their gov sites. Complete list of those tlds for each country can be found at https://whoisdatacenter.com/country/ 
 
 ```
+vim tld-domains-scraper.py
+```
+
+```
 # List of TLDs to search
 tlds = [
     ".IR",
