@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to TLD Domain Scraper</h1>
+    <p class="lead">Easily scrape and manage domain lists across multiple TLDs.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('main.scrape') }}" role="button">Start Scraping</a>
+</div>
+{% endblock %}

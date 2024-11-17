@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Scrape Domains</h2>
+<form action="{{ url_for('main.scrape') }}" method="post">
+    <div class="mb-3">
+        <label for="tlds" class="form-label">Enter TLDs (comma-separated):</label>
+        <input type="text" class="form-control" id="tlds" name="tlds" placeholder=".ir, .uk, .fr">
+    </div>
+    <button type="submit" class="btn btn-primary">Start Scraping</button>
+</form>
+{% endblock %}

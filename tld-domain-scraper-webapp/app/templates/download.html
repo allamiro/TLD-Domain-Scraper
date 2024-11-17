@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Download Data</h2>
+<p>Click the button below to download the scraped domains as a CSV file.</p>
+<a href="{{ url_for('main.download') }}" class="btn btn-success">Download CSV</a>
+{% endblock %}
