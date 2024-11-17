@@ -38,19 +38,43 @@ Epidemics and pandemics, such as the recent COVID-19 outbreak, produce immense a
 
 1. We need a browser driver, such as ChromeDriver for Google Chrome.
 
+* For Fedora /RHEL / RockyLinux
+
 ```
 dnf install python3 python3-devel chromedriver chrom-browser -y
 ```
 
+* For Ubuntu
+
+```
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3 python3-venv python3-dev chromium-driver chromium-browser -y
+
+```
+ 
 
 2. Install python libraries
 
+
 ```
+python3 -m venv venv
+source venv/bin/activate
+
 pip install selenium
 pip install requests
 ```
 
-3. Update these portions of the code to reflect the target tlds  gov sites exclusions and country name you querying: 
+
+4. Clone the repository
+
+```
+git clone https://github.com/allamiro/TLD-Domain-Scraper.git
+cd TLD-Domain-Scraper
+```
+
+
+
+5. Update these portions of the code to reflect the target tlds  gov sites exclusions and country name you querying: 
 
 I'm using iran tlds that ends with .ir and excluding their gov sites. Complete list of those tlds for each country can be found at https://whoisdatacenter.com/country/ 
 
