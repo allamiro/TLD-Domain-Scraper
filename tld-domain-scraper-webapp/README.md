@@ -37,3 +37,9 @@ Build and start the app with Docker Compose:
 ```docker-compose up --build```
 Access the app at ```http://localhost:5000```.
 
+
+## Contributing
+If you'd like to contribute, please fork the repository and submit a pull request. Contributions are welcome!
+
+## License
+This project is licensed under the ```MIT License``` - see the LICENSE file for details.
