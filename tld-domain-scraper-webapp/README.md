@@ -35,6 +35,7 @@ Open your browser and navigate to ```http://localhost:5000```.
 Build and start the app with Docker Compose:
 
 ```docker-compose up --build```
+then 
 Access the app at ```http://localhost:5000```.
 
 
