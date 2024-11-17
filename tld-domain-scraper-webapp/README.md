@@ -26,9 +26,9 @@ Docker and Docker Compose (optional)
 Start the Flask development server:
 
 
-```python run.py
-Open your browser and navigate to http://localhost:5000.
-```
+```python run.py```
+Open your browser and navigate to ```http://localhost:5000```.
+
 
 3. Using Docker Compose
 
