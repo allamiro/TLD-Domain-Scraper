@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import platform
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -8,9 +9,23 @@ from urllib.parse import urlparse
 import time
 import random
 
+# Detect the operating system
+current_os = platform.system()
+
+# Set paths based on the operating system
+if current_os == "Darwin":  # macOS
+    chrome_driver_path = "/usr/local/bin/chromedriver"  # Typical path for chromedriver on macOS
+    chrome_binary_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"  # Default path for Chrome on macOS
+elif current_os == "Linux":  # Linux
+    chrome_driver_path = "/usr/bin/chromedriver"
+    chrome_binary_path = "/usr/bin/google-chrome"
+elif current_os == "Windows":  # Windows
+    chrome_driver_path = "C:\\path\\to\\chromedriver.exe"
+    chrome_binary_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+else:
+    raise Exception(f"Unsupported OS: {current_os}")
+
 # Chrome Driver options
-chrome_driver_path = "/usr/bin/chromedriver"
-chrome_binary_path = "/usr/bin/google-chrome"  # Adjust this if necessary
 chrome_options = Options()
 chrome_options.binary_location = chrome_binary_path
 service = Service(executable_path=chrome_driver_path)
@@ -114,6 +129,5 @@ for tld in tlds:
             file.write(domain + "\n")
 
     print(f"\nDomains for {tld} have been saved to {filename}")
-
 
 driver.quit()
