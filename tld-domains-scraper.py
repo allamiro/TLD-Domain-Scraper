@@ -15,7 +15,7 @@ current_os = platform.system()
 
 # Set paths based on the operating system
 if current_os == "Darwin":  # macOS
-    chrome_driver_path = "/usr/local/bin/chromedriver"  # Typical path for chromedriver on macOS
+    chrome_driver_path = "/opt/homebrew/bin/chromedriver"  # Typical path for chromedriver on macOS
     chrome_binary_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"  # Default path for Chrome on macOS
 elif current_os == "Linux":  # Linux
     chrome_driver_path = "/usr/bin/chromedriver"
