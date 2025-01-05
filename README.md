@@ -64,25 +64,13 @@ sudo apt install python3 python3-venv python3-dev chromium-driver chromium-brows
    brew install chromium chromedriver
    ```
 
-3. **Add ChromeDriver to PATH:**
-   ```bash
-   export PATH="/opt/homebrew/bin:$PATH"
-   ```
-
-4. **Verify Installation:**
-   Ensure that both `chromium` and `chromedriver` are installed correctly:
-   ```bash
-   chromium --version
-   chromedriver --version
-   ```
-
-5. **Create a Python Virtual Environment and Activate it:**
+3. **Create a Python Virtual Environment and Activate it:**
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
 
-6. **Install Required Libraries:**
+4. **Install Required Libraries:**
    ```bash
    pip install selenium requests
    ```
