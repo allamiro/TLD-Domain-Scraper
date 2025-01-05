@@ -53,6 +53,7 @@ sudo apt install python3 python3-venv python3-dev chromium-driver chromium-brows
 ```
 
 ### **For macOS M1/M2:**
+* when you run the script in MAC os make sure you allow chromium and chromedriver to run through the security settings. 
 1. **Install Homebrew:**
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
