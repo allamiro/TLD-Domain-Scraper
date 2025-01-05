@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from urllib.parse import urlparse
 import time
 import random
+import os 
 
 # Detect the operating system
 current_os = platform.system()
