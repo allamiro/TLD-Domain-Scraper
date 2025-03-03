@@ -78,7 +78,9 @@ sudo apt install python3 python3-venv python3-dev chromium-driver chromium-brows
 
 ---
 
-## Clone the Repository
+
+## How to deploy the app
+### Clone the Repository
 ```bash
 git clone https://github.com/allamiro/TLD-Domain-Scraper.git
 cd TLD-Domain-Scraper
@@ -86,7 +88,7 @@ cd TLD-Domain-Scraper
 
 ---
 
-## Update Code for Specific TLDs
+### Update Code for Specific TLDs
 
 Update these portions of the code to reflect the target TLDs, government site exclusions, and the country name you're querying. A complete list of TLDs for each country can be found at [Whois Data Center](https://whoisdatacenter.com/country/).
 
