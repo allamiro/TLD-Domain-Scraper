@@ -48,7 +48,7 @@ By targeting specific TLDs and excluding certain government websites (to avoid r
 
 ## Dependencies
 
-### **For Fedora/RHEL/Rocky Linux:**
+### **For Fedora/RHEL/CentOS/Rocky Linux:**
 ```bash
 dnf install python3 python3-devel chromedriver chromium-browser -y
 ```
@@ -87,6 +87,7 @@ sudo apt install python3 python3-venv python3-dev chromium-driver chromium-brows
 
 
 ## How to deploy the app
+
 ### Clone the Repository
 ```bash
 git clone https://github.com/allamiro/TLD-Domain-Scraper.git
