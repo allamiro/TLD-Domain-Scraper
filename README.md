@@ -25,6 +25,13 @@ By targeting specific TLDs and excluding certain government websites (to avoid r
   Identify which domains correlate with cyber threats and bad actors.
 
 - **Academic Research**
+* Computational Social Science: Analyzing news dissemination, social movements, and public sentiment across different countries by tracking domain-specific reporting patterns.
+* Linguistic and Sentiment Analysis: Studying variations in language use, framing, and sentiment in news articles and blog posts related to geopolitical events, crises, or policy changes.
+* Network Analysis and Misinformation Detection: Mapping the propagation of news, rumors, and misinformation by analyzing cross-domain citations and content similarities.
+* Crisis Informatics: Understanding how real-time digital information flows during natural disasters or pandemics, helping researchers build models for emergency response and decision-making.
+* Cybersecurity Research: Investigating domain registration patterns, malicious domain clustering, and correlations between TLDs and cyber threat activities.
+* Public Health Surveillance: Utilizing automated scraping of government and health organization websites to monitor emerging disease outbreaks, vaccine distribution updates, or public health advisories.
+* Policy and Governance Studies: Analyzing government portals to track policy implementations, public announcements, and regulatory changes in different jurisdictions.
 
 ### Plan
 1. Create a list of domain names across various Top-Level Domains (TLDs) by using the Python-based web scraper.
