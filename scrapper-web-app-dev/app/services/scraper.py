@@ -9,6 +9,7 @@ import random
 from typing import List, Set, Optional
 import logging
 from fastapi import WebSocket
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,12 @@ class DomainScraper:
     def _setup_chrome_driver(self):
         """Setup Chrome driver based on operating system"""
         if self.current_os == "Darwin":  # macOS
-            chrome_driver_path = "/opt/homebrew/bin/chromedriver"
+            # Use ChromeDriver from the project directory
+            chrome_driver_path = os.path.join(os.path.dirname(__file__), "..", "..", "chromedriver")
             chrome_binary_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+            
+            # Set ChromeDriver permissions
+            os.chmod(chrome_driver_path, 0o755)
         elif self.current_os == "Linux":
             chrome_driver_path = "/usr/bin/chromedriver"
             chrome_binary_path = "/usr/bin/google-chrome"
@@ -35,7 +40,16 @@ class DomainScraper:
 
         chrome_options = Options()
         chrome_options.binary_location = chrome_binary_path
-        # Don't run headless to allow manual CAPTCHA solving
+        
+        # Configure window size and position
+        chrome_options.add_argument("--window-size=800,600")
+        chrome_options.add_argument("--window-position=0,0")  # Position on the left side
+        
+        # Additional options for better scraping
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        
         service = Service(executable_path=chrome_driver_path)
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
 
