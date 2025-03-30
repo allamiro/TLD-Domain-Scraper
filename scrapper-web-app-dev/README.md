@@ -1,50 +1,126 @@
 # TLD Domain Scraper Web Application
 
-A FastAPI-based web application for scraping and analyzing domain names across multiple country-level Top-Level Domains (TLDs).
-
-## Features
-
-- Web interface for triggering domain scraping
-- REST API endpoints for domain management
-- SQLite database for storing scraped domains
-- Modern UI with Tailwind CSS and HTMX
-- Asynchronous domain scraping with Selenium
+A web application for scraping domains with specific TLDs using Selenium and FastAPI.
 
 ## Prerequisites
 
 - Python 3.8+
 - Chrome browser installed
-- ChromeDriver installed and in PATH
+- ChromeDriver installed
 
 ## Installation
 
-1. Create a virtual environment:
+1. Clone the repository:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+git clone <repository-url>
+cd scrapper-web-app-dev
 ```
 
-2. Install dependencies:
+2. Create and activate a virtual environment:
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
+```
+
+3. Install required packages:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Install ChromeDriver:
-- macOS: `brew install chromedriver`
-- Linux: `sudo apt install chromium-chromedriver`
-- Windows: Download from [ChromeDriver website](https://sites.google.com/chromium.org/driver/)
+4. Install ChromeDriver:
+
+### macOS Setup
+1. Install ChromeDriver using Homebrew:
+```bash
+brew install chromedriver
+```
+
+2. Allow ChromeDriver in macOS Security:
+   - Open System Settings
+   - Go to Privacy & Security
+   - Scroll down to Security
+   - Look for a message about ChromeDriver being blocked
+   - Click "Allow Anyway"
+   - If prompted, enter your administrator password
+   - You may need to right-click ChromeDriver in Finder and select "Open" to confirm the security exception
+
+### Linux Setup
+```bash
+sudo apt-get install chromium-chromedriver
+```
+
+### Windows Setup
+Download ChromeDriver from [https://chromedriver.chromium.org/downloads](https://chromedriver.chromium.org/downloads) and add it to your system PATH.
 
 ## Running the Application
 
-1. Start the FastAPI server:
+1. Make sure your virtual environment is activated:
+```bash
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
+```
+
+2. Start the FastAPI server:
 ```bash
 uvicorn app.main:app --reload
 ```
 
-2. Open your browser and navigate to:
+3. Open your browser and navigate to:
 ```
 http://localhost:8000
 ```
+
+## Usage
+
+1. Enter a TLD (e.g., `.edu.sd`) in the input field
+2. Click "Start Scraping"
+3. If a CAPTCHA appears, solve it manually in the browser window
+4. Monitor progress in the dashboard
+5. Download results when complete
+
+## Features
+
+- Real-time progress tracking
+- Manual CAPTCHA solving
+- Download results as text file
+- Dashboard with statistics
+- WebSocket updates for live feedback
+
+## Troubleshooting
+
+### macOS Security Issues
+If you see a security warning when running ChromeDriver:
+1. Go to System Settings > Privacy & Security
+2. Look for ChromeDriver in the Security section
+3. Click "Allow Anyway"
+4. You may need to right-click ChromeDriver in Finder and select "Open" to confirm
+
+### ChromeDriver Version Mismatch
+If you encounter version mismatch errors:
+1. Check your Chrome browser version
+2. Install the matching ChromeDriver version
+3. For macOS: `brew upgrade chromedriver`
+
+### Virtual Environment Issues
+If you encounter package-related errors:
+1. Make sure your virtual environment is activated
+2. Verify you're in the correct directory
+3. Try reinstalling requirements:
+```bash
+pip install -r requirements.txt --upgrade
+```
+
+## License
+
+MIT License
 
 ## API Endpoints
 

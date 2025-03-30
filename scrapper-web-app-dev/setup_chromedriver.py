@@ -9,7 +9,7 @@ import io
 def get_chrome_version():
     """Get the installed Chrome version on macOS"""
     try:
-        cmd = '/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version'
+        cmd = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --version'
         version = subprocess.check_output(cmd, shell=True).decode('utf-8').strip()
         return version.split()[-1]
     except:
@@ -18,16 +18,12 @@ def get_chrome_version():
 
 def download_chromedriver(version):
     """Download ChromeDriver matching the Chrome version"""
-    # Extract major version
-    major_version = version.split('.')[0]
+    # For newer Chrome versions, use ChromeDriver 114 which is known to work
+    chromedriver_version = "114.0.5735.90"
     
-    # Get the latest ChromeDriver version for this Chrome version
-    response = requests.get(f'https://chromedriver.storage.googleapis.com/LATEST_RELEASE_{major_version}')
-    if response.status_code != 200:
-        print(f"Error: Could not get ChromeDriver version for Chrome {major_version}")
-        sys.exit(1)
-    
-    chromedriver_version = response.text.strip()
+    # Get the project root directory
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    chromedriver_path = os.path.join(project_root, "chromedriver")
     
     # Download ChromeDriver
     url = f'https://chromedriver.storage.googleapis.com/{chromedriver_version}/chromedriver_mac64.zip'
@@ -40,12 +36,12 @@ def download_chromedriver(version):
     
     # Extract the zip file
     z = zipfile.ZipFile(io.BytesIO(response.content))
-    z.extractall()
+    z.extractall(project_root)
     
     # Set permissions
-    os.chmod('chromedriver', 0o755)
+    os.chmod(chromedriver_path, 0o755)
     
-    print("ChromeDriver setup complete!")
+    print(f"ChromeDriver setup complete! Downloaded to: {chromedriver_path}")
 
 def main():
     if platform.system() != 'Darwin':
