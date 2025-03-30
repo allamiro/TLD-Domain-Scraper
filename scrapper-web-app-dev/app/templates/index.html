@@ -6,6 +6,7 @@
     <title>{{ title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
     <div class="min-h-screen">
@@ -24,6 +25,29 @@
 
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Stats Dashboard -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Scraping Statistics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-blue-800">Total Domains</h3>
+                        <p class="text-2xl font-bold text-blue-600">{{ recent_domains|length }}</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-green-800">TLDs Scraped</h3>
+                        <p class="text-2xl font-bold text-green-600">{{ tld_stats|length }}</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-purple-800">Latest Scrape</h3>
+                        <p class="text-2xl font-bold text-purple-600">{{ recent_domains[0].created_at if recent_domains else 'None' }}</p>
+                    </div>
+                </div>
+                <!-- TLD Statistics Chart -->
+                <div class="mt-6">
+                    <canvas id="tldChart"></canvas>
+                </div>
+            </div>
+
             <!-- Scraping Form -->
             <div class="bg-white shadow rounded-lg p-6 mb-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Scrape Domains</h2>
@@ -43,9 +67,9 @@
                 </form>
             </div>
 
-            <!-- Results Section -->
-            <div id="results" class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Scraped Domains</h2>
+            <!-- Recent Domains -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Recent Domains</h2>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -56,7 +80,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for domain in domains %}
+                            {% for domain in recent_domains %}
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ domain.domain_name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ domain.tld }}</td>
@@ -84,6 +108,31 @@
         });
         document.body.addEventListener('htmx:afterRequest', function(evt) {
             document.getElementById('loading').classList.add('hidden');
+        });
+
+        // Initialize Chart.js for TLD statistics
+        const ctx = document.getElementById('tldChart').getContext('2d');
+        const tldData = {{ tld_stats|tojson }};
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: tldData.map(item => item[0]),
+                datasets: [{
+                    label: 'Domains per TLD',
+                    data: tldData.map(item => item[1]),
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
         });
     </script>
 </body>
