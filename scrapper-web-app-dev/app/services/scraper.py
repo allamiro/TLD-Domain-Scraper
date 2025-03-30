@@ -6,14 +6,17 @@ from selenium.webdriver.common.by import By
 from urllib.parse import urlparse
 import time
 import random
-from typing import List, Set
+from typing import List, Set, Optional
 import logging
+from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
 class DomainScraper:
-    def __init__(self):
+    def __init__(self, websocket: Optional[WebSocket] = None):
         self.current_os = platform.system()
+        self.websocket = websocket
+        self.is_cancelled = False
         self._setup_chrome_driver()
         
     def _setup_chrome_driver(self):
@@ -32,9 +35,18 @@ class DomainScraper:
 
         chrome_options = Options()
         chrome_options.binary_location = chrome_binary_path
-        chrome_options.add_argument('--headless')  # Run in headless mode
+        # Don't run headless to allow manual CAPTCHA solving
         service = Service(executable_path=chrome_driver_path)
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    async def send_progress(self, message: str, progress: float = None):
+        """Send progress updates through WebSocket"""
+        if self.websocket:
+            await self.websocket.send_json({
+                "type": "progress",
+                "message": message,
+                "progress": progress
+            })
 
     def get_base_domain(self, url: str) -> str:
         """Extract base domain from URL"""
@@ -66,22 +78,37 @@ class DomainScraper:
         url = f"https://www.google.com/search?q={query}"
 
         try:
+            await self.send_progress(f"Starting scraping for {tld}", 0)
             self.driver.get(url)
             time.sleep(2)  # Allow page to load
 
             for page in range(30):  # Limit to 30 pages
+                if self.is_cancelled:
+                    await self.send_progress("Scraping cancelled by user", 0)
+                    break
+
                 if self.is_captcha_present():
-                    logger.warning("CAPTCHA detected! Skipping remaining pages.")
+                    await self.send_progress("CAPTCHA detected! Please solve it manually.", 0)
+                    # Wait for user to solve CAPTCHA
+                    while self.is_captcha_present():
+                        if self.is_cancelled:
+                            break
+                        time.sleep(2)
+
+                if self.is_cancelled:
                     break
 
                 results = self.driver.find_elements(By.CSS_SELECTOR, 'a')
-                logger.info(f"Processing page {page + 1}")
+                await self.send_progress(f"Processing page {page + 1}", (page + 1) / 30)
 
                 for link in results:
+                    if self.is_cancelled:
+                        break
                     href = link.get_attribute('href')
                     if href and tld.lower() in href.lower() and '.gov.ir' not in href and 'translate.google.com' not in href:
                         base_domain = self.get_base_domain(href)
                         domain_list.add(base_domain)
+                        await self.send_progress(f"Found domain: {base_domain}", None)
 
                 next_button = self.is_next_button_present()
                 if next_button:
@@ -90,12 +117,20 @@ class DomainScraper:
                 else:
                     break
 
+            await self.send_progress(f"Completed scraping for {tld}. Found {len(domain_list)} domains.", 1)
+
         except Exception as e:
             logger.error(f"Error scraping TLD {tld}: {str(e)}")
+            await self.send_progress(f"Error: {str(e)}", 0)
+            raise
         finally:
             self.driver.quit()
 
         return domain_list
+
+    def cancel(self):
+        """Cancel the scraping operation"""
+        self.is_cancelled = True
 
     def __del__(self):
         """Cleanup: close the browser"""

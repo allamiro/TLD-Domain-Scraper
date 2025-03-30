@@ -51,13 +51,16 @@
             <!-- Scraping Form -->
             <div class="bg-white shadow rounded-lg p-6 mb-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Scrape Domains</h2>
-                <form hx-post="/scrape" hx-target="#results" class="space-y-4">
+                <form hx-post="/scrape" 
+                      hx-target="#results" 
+                      hx-indicator="#loading"
+                      class="space-y-4">
                     <div>
                         <label for="tld" class="block text-sm font-medium text-gray-700">Top-Level Domain</label>
                         <div class="mt-1">
                             <input type="text" name="tld" id="tld" required
                                 class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                placeholder="e.g., .ir, .com">
+                                placeholder="e.g., .edu.sd, .ir, .com">
                         </div>
                     </div>
                     <button type="submit"
@@ -65,6 +68,8 @@
                         Start Scraping
                     </button>
                 </form>
+                <!-- Results Section -->
+                <div id="results" class="mt-4"></div>
             </div>
 
             <!-- Recent Domains -->
@@ -97,7 +102,10 @@
     <!-- Loading Indicator -->
     <div id="loading" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
         <div class="flex items-center justify-center min-h-screen">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            <div class="bg-white p-4 rounded-lg shadow-lg">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="mt-4 text-gray-700">Scraping domains... This may take a few minutes.</p>
+            </div>
         </div>
     </div>
 

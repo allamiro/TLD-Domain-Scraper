@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraping {{ tld }} - TLD Domain Scraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <h1 class="text-xl font-bold text-gray-800">TLD Domain Scraper</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-medium text-gray-900">Scraping {{ tld }}</h2>
+                    <button id="cancelBtn" 
+                            hx-post="/cancel/{{ tld }}"
+                            hx-target="#status"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Cancel Scraping
+                    </button>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="mb-6">
+                    <div class="relative pt-1">
+                        <div class="flex mb-2 items-center justify-between">
+                            <div>
+                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                                    Progress
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span id="progressText" class="text-xs font-semibold inline-block text-blue-600">
+                                    0%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                            <div id="progressBar" style="width: 0%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Messages -->
+                <div id="status" class="mb-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p id="statusMessage" class="text-sm text-blue-700">
+                                    Starting scraping process...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAPTCHA Section -->
+                <div id="captchaSection" class="hidden mb-6">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    CAPTCHA detected! Please solve it in the browser window and click "Continue" when done.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="continueBtn" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Continue
+                    </button>
+                </div>
+
+                <!-- Found Domains -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Found Domains</h3>
+                    <div id="domainsList" class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                        <!-- Domains will be added here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let ws = new WebSocket(`ws://${window.location.host}/ws/{{ tld }}`);
+        let domains = new Set();
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === "progress") {
+                updateProgress(data.message, data.progress);
+            } else if (data.type === "complete") {
+                handleComplete(data);
+            } else if (data.type === "error") {
+                handleError(data.message);
+            }
+        };
+
+        ws.onclose = function() {
+            document.getElementById('statusMessage').textContent = "Connection closed. Redirecting...";
+            setTimeout(() => window.location.href = "/", 2000);
+        };
+
+        function updateProgress(message, progress) {
+            document.getElementById('statusMessage').textContent = message;
+            if (progress !== null) {
+                const progressPercent = Math.round(progress * 100);
+                document.getElementById('progressText').textContent = `${progressPercent}%`;
+                document.getElementById('progressBar').style.width = `${progressPercent}%`;
+            }
+        }
+
+        function handleComplete(data) {
+            document.getElementById('statusMessage').textContent = data.message;
+            document.getElementById('progressBar').style.width = "100%";
+            document.getElementById('progressText').textContent = "100%";
+            
+            // Add domains to the list
+            const domainsList = document.getElementById('domainsList');
+            data.domains.forEach(domain => {
+                if (!domains.has(domain)) {
+                    domains.add(domain);
+                    const div = document.createElement('div');
+                    div.className = "text-sm text-gray-700";
+                    div.textContent = domain;
+                    domainsList.appendChild(div);
+                }
+            });
+
+            // Add download button
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = `/download/{{ tld }}`;
+            downloadBtn.className = "mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
+            downloadBtn.textContent = "Download Domains";
+            document.getElementById('domainsList').appendChild(downloadBtn);
+
+            // Redirect after 5 seconds
+            setTimeout(() => window.location.href = "/", 5000);
+        }
+
+        function handleError(message) {
+            document.getElementById('statusMessage').textContent = `Error: ${message}`;
+            document.getElementById('progressBar').style.width = "0%";
+            document.getElementById('progressText').textContent = "0%";
+            setTimeout(() => window.location.href = "/", 5000);
+        }
+
+        // Handle CAPTCHA section
+        document.getElementById('continueBtn').addEventListener('click', function() {
+            document.getElementById('captchaSection').classList.add('hidden');
+        });
+    </script>
+</body>
+</html> 
