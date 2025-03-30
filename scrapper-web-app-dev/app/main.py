@@ -80,6 +80,7 @@ async def websocket_endpoint(websocket: WebSocket, tld: str):
 
 @app.post("/scrape")
 async def scrape_domains(
+    request: Request,
     tld: str = Form(...),
     db: Session = Depends(get_db)
 ):
@@ -90,7 +91,7 @@ async def scrape_domains(
     return templates.TemplateResponse(
         "scraping.html",
         {
-            "request": Request,
+            "request": request,
             "tld": tld,
             "ws_url": f"/ws/{tld}"
         }
