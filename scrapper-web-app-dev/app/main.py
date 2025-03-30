@@ -49,6 +49,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
 async def websocket_endpoint(websocket: WebSocket, tld: str):
     """WebSocket endpoint for real-time scraping updates"""
     await websocket.accept()
+    scraper = None
     try:
         scraper = DomainScraper(websocket)
         active_scrapers[tld] = scraper
@@ -71,11 +72,16 @@ async def websocket_endpoint(websocket: WebSocket, tld: str):
             active_scrapers[tld].cancel()
             del active_scrapers[tld]
     except Exception as e:
+        logger.error(f"Error in WebSocket connection: {str(e)}")
+        if scraper:
+            scraper.cancel()
         await websocket.send_json({
             "type": "error",
             "message": str(e)
         })
     finally:
+        if tld in active_scrapers:
+            del active_scrapers[tld]
         await websocket.close()
 
 @app.post("/scrape")

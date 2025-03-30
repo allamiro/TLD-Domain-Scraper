@@ -18,6 +18,7 @@ class DomainScraper:
         self.current_os = platform.system()
         self.websocket = websocket
         self.is_cancelled = False
+        self.driver = None
         self._setup_chrome_driver()
         
     def _setup_chrome_driver(self):
@@ -50,17 +51,23 @@ class DomainScraper:
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         
+        # Add user agent to avoid detection
+        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        
         service = Service(executable_path=chrome_driver_path)
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
 
     async def send_progress(self, message: str, progress: float = None):
         """Send progress updates through WebSocket"""
         if self.websocket:
-            await self.websocket.send_json({
-                "type": "progress",
-                "message": message,
-                "progress": progress
-            })
+            try:
+                await self.websocket.send_json({
+                    "type": "progress",
+                    "message": message,
+                    "progress": progress
+                })
+            except Exception as e:
+                logger.error(f"Error sending progress: {str(e)}")
 
     def get_base_domain(self, url: str) -> str:
         """Extract base domain from URL"""
@@ -94,7 +101,7 @@ class DomainScraper:
         try:
             await self.send_progress(f"Starting scraping for {tld}", 0)
             self.driver.get(url)
-            time.sleep(2)  # Allow page to load
+            time.sleep(3)  # Allow page to load
 
             for page in range(30):  # Limit to 30 pages
                 if self.is_cancelled:
@@ -138,17 +145,21 @@ class DomainScraper:
             await self.send_progress(f"Error: {str(e)}", 0)
             raise
         finally:
-            self.driver.quit()
+            if self.driver:
+                self.driver.quit()
 
         return domain_list
 
     def cancel(self):
         """Cancel the scraping operation"""
         self.is_cancelled = True
+        if self.driver:
+            self.driver.quit()
 
     def __del__(self):
         """Cleanup: close the browser"""
-        try:
-            self.driver.quit()
-        except:
-            pass 
+        if self.driver:
+            try:
+                self.driver.quit()
+            except:
+                pass 

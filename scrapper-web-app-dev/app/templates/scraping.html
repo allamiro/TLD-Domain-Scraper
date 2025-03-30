@@ -107,25 +107,48 @@
     </div>
 
     <script>
-        let ws = new WebSocket(`ws://${window.location.host}/ws/{{ tld }}`);
+        let ws = null;
         let domains = new Set();
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 3;
 
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${window.location.host}/ws/{{ tld }}`);
             
-            if (data.type === "progress") {
-                updateProgress(data.message, data.progress);
-            } else if (data.type === "complete") {
-                handleComplete(data);
-            } else if (data.type === "error") {
-                handleError(data.message);
-            }
-        };
+            ws.onopen = function() {
+                console.log("WebSocket connection established");
+                reconnectAttempts = 0;
+            };
 
-        ws.onclose = function() {
-            document.getElementById('statusMessage').textContent = "Connection closed. Redirecting...";
-            setTimeout(() => window.location.href = "/", 2000);
-        };
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === "progress") {
+                    updateProgress(data.message, data.progress);
+                } else if (data.type === "complete") {
+                    handleComplete(data);
+                } else if (data.type === "error") {
+                    handleError(data.message);
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("WebSocket connection closed");
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    console.log(`Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts})...`);
+                    setTimeout(connectWebSocket, 2000);
+                } else {
+                    document.getElementById('statusMessage').textContent = "Connection closed. Redirecting...";
+                    setTimeout(() => window.location.href = "/", 2000);
+                }
+            };
+
+            ws.onerror = function(error) {
+                console.error("WebSocket error:", error);
+                handleError("Connection error occurred");
+            };
+        }
 
         function updateProgress(message, progress) {
             document.getElementById('statusMessage').textContent = message;
@@ -175,6 +198,9 @@
         document.getElementById('continueBtn').addEventListener('click', function() {
             document.getElementById('captchaSection').classList.add('hidden');
         });
+
+        // Initialize WebSocket connection
+        connectWebSocket();
     </script>
 </body>
 </html> 
