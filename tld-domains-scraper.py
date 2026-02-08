@@ -15,13 +15,10 @@ current_os = platform.system()
 
 # Set paths based on the operating system
 if current_os == "Darwin":  # macOS
-    chrome_driver_path = "/opt/homebrew/bin/chromedriver"  # Typical path for chromedriver on macOS
     chrome_binary_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"  # Default path for Chrome on macOS
 elif current_os == "Linux":  # Linux
-    chrome_driver_path = "/usr/bin/chromedriver"
     chrome_binary_path = "/usr/bin/google-chrome"
 elif current_os == "Windows":  # Windows
-    chrome_driver_path = "C:\\path\\to\\chromedriver.exe"
     chrome_binary_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 else:
     raise Exception(f"Unsupported OS: {current_os}")
@@ -29,10 +26,26 @@ else:
 # Chrome Driver options
 chrome_options = Options()
 chrome_options.binary_location = chrome_binary_path
-service = Service(executable_path=chrome_driver_path)
 
-# Initialize the WebDriver with the service and options
-driver = webdriver.Chrome(service=service, options=chrome_options)
+# Prefer Selenium Manager to auto-download a matching driver.
+# Allow overriding with CHROMEDRIVER_PATH if a specific driver is required.
+chrome_driver_path = os.getenv("CHROMEDRIVER_PATH")
+if chrome_driver_path:
+    service = Service(executable_path=chrome_driver_path)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+else:
+    # If a mismatched chromedriver exists in PATH, Selenium will pick it.
+    # Remove PATH entries that contain a chromedriver binary so Selenium Manager can work.
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+    filtered_entries = []
+    for entry in path_entries:
+        chromedriver_candidate = os.path.join(entry, "chromedriver")
+        chromedriver_candidate_win = os.path.join(entry, "chromedriver.exe")
+        if os.path.exists(chromedriver_candidate) or os.path.exists(chromedriver_candidate_win):
+            continue
+        filtered_entries.append(entry)
+    os.environ["PATH"] = os.pathsep.join(filtered_entries)
+    driver = webdriver.Chrome(options=chrome_options)
 
 # List of TLDs to search
 tlds = [
