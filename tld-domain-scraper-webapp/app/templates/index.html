@@ -2,38 +2,80 @@
 
 {% block content %}
 <div class="hero-banner text-center text-white rounded p-5 mb-4">
-    <h1 class="display-4 fw-bold">TLD Domain Scraper</h1>
-    <p class="lead mb-4">Scrape, store, and export domain lists across multiple top-level domains.</p>
-    <div class="d-flex justify-content-center gap-3">
-        <a class="btn btn-light btn-lg" href="{{ url_for('main.scrape') }}">Start Scraping</a>
-        <a class="btn btn-outline-light btn-lg" href="{{ url_for('main.results') }}">View Results</a>
-    </div>
+  <h1 class="display-4 fw-bold">TLD Domain Scraper</h1>
+  <p class="lead mb-4">Scrape, store, and export domain lists across multiple top-level domains.</p>
+  <div class="d-flex justify-content-center gap-3">
+    <a class="btn btn-light btn-lg" href="{{ url_for('main.scrape') }}">Start Scraping</a>
+    <a class="btn btn-outline-light btn-lg" href="{{ url_for('main.history') }}">Run History</a>
+  </div>
 </div>
 
-<div class="row g-4 text-center">
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Multi-TLD Support</h5>
-                <p class="card-text text-muted">Scrape domains across any combination of TLDs in a single run.</p>
-            </div>
-        </div>
+<!-- Quick stats -->
+<div class="row g-3 mb-4 text-center">
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-primary">{{ total_domains }}</div>
+        <div class="text-muted">Total domains stored</div>
+      </div>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Duplicate-Free Storage</h5>
-                <p class="card-text text-muted">Results are deduplicated before being saved to the database.</p>
-            </div>
-        </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-success">{{ total_runs }}</div>
+        <div class="text-muted">Scrape runs completed</div>
+      </div>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">CSV Export</h5>
-                <p class="card-text text-muted">Download all scraped domains as a CSV file, with optional TLD filter.</p>
-            </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-info">
+          {{ recent_runs | map(attribute='tld') | unique | list | length }}
         </div>
+        <div class="text-muted">Unique TLDs scraped</div>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Recent runs -->
+{% if recent_runs %}
+<h5 class="mb-2">Recent Runs</h5>
+<div class="table-responsive">
+  <table class="table table-sm table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>TLD</th>
+        <th>Mode</th>
+        <th>Started</th>
+        <th class="text-end">Saved</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in recent_runs %}
+      <tr>
+        <td><span class="badge bg-secondary">{{ run.tld }}</span></td>
+        <td>
+          {% if run.mode == "replace" %}
+            <span class="badge bg-warning text-dark">replace</span>
+          {% else %}
+            <span class="badge bg-info text-dark">append</span>
+          {% endif %}
+        </td>
+        <td class="small text-muted">{{ run.started_at.strftime('%Y-%m-%d %H:%M') if run.started_at else '—' }}</td>
+        <td class="text-end text-success fw-semibold">{{ run.domains_inserted }}</td>
+        <td>
+          <a href="{{ url_for('main.run_detail', run_id=run.id) }}"
+             class="btn btn-outline-primary btn-sm">View</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<a href="{{ url_for('main.history') }}" class="btn btn-outline-secondary btn-sm">All runs →</a>
+{% endif %}
 {% endblock %}

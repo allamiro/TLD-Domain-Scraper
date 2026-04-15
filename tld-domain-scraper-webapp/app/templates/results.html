@@ -36,7 +36,8 @@
                 <th>#</th>
                 <th>URL</th>
                 <th>TLD</th>
-                <th>Scraped At</th>
+                <th>Run</th>
+                <th>Discovered</th>
             </tr>
         </thead>
         <tbody>
@@ -47,7 +48,13 @@
                     <a href="{{ domain.url }}" target="_blank" rel="noopener noreferrer">{{ domain.url }}</a>
                 </td>
                 <td><span class="badge bg-secondary">{{ domain.tld }}</span></td>
-                <td class="text-muted small">{{ domain.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="text-muted small">
+                    {% if domain.run_id %}
+                        <a href="{{ url_for('main.run_detail', run_id=domain.run_id) }}"
+                           class="text-decoration-none text-muted">Run #{{ domain.run_id }}</a>
+                    {% else %}—{% endif %}
+                </td>
+                <td class="text-muted small">{{ domain.discovered_at.strftime('%Y-%m-%d %H:%M') if domain.discovered_at else '—' }}</td>
             </tr>
             {% endfor %}
         </tbody>

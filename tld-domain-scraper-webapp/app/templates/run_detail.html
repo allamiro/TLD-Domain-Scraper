@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('main.history') }}">Run History</a></li>
+    <li class="breadcrumb-item active">Run #{{ run.id }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <h2 class="mb-0">
+    Run #{{ run.id }} &mdash; <span class="badge bg-secondary">{{ run.tld }}</span>
+  </h2>
+  <a href="{{ url_for('main.download', run_id=run.id) }}" class="btn btn-success btn-sm">
+    Download CSV
+  </a>
+</div>
+
+<!-- Run metadata -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-primary">{{ run.domains_found }}</div>
+        <div class="text-muted small">Domains found</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body">
+        <div class="fs-4 fw-bold text-success">{{ run.domains_inserted }}</div>
+        <div class="text-muted small">New domains saved</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body">
+        <div class="fs-4 fw-bold {% if run.domains_deleted > 0 %}text-danger{% else %}text-muted{% endif %}">
+          {{ run.domains_deleted or 0 }}
+        </div>
+        <div class="text-muted small">Domains deleted</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body">
+        <div class="fs-6 fw-bold">
+          {% if run.mode == "replace" %}
+            <span class="badge bg-warning text-dark fs-6">replace</span>
+          {% else %}
+            <span class="badge bg-info text-dark fs-6">append</span>
+          {% endif %}
+        </div>
+        <div class="text-muted small mt-1">Mode</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mb-3 text-muted small">
+  Started: {{ run.started_at.strftime('%Y-%m-%d %H:%M:%S UTC') if run.started_at else '—' }}
+  &nbsp;|&nbsp;
+  Finished: {{ run.finished_at.strftime('%Y-%m-%d %H:%M:%S UTC') if run.finished_at else 'in progress…' }}
+</div>
+
+<!-- Domains table -->
+{% if pagination.items %}
+<div class="table-responsive">
+  <table class="table table-striped table-sm table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>URL</th>
+        <th>Discovered</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for domain in pagination.items %}
+      <tr>
+        <td class="text-muted small">{{ domain.id }}</td>
+        <td>
+          <a href="{{ domain.url }}" target="_blank" rel="noopener noreferrer">{{ domain.url }}</a>
+        </td>
+        <td class="text-muted small">{{ domain.discovered_at.strftime('%Y-%m-%d %H:%M') if domain.discovered_at else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav aria-label="Domains pagination">
+  <ul class="pagination pagination-sm justify-content-center">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('main.run_detail', run_id=run.id, page=pagination.prev_num) }}">&laquo;</a>
+    </li>
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+      <li class="page-item {% if p == pagination.page %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('main.run_detail', run_id=run.id, page=p) }}">{{ p }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('main.run_detail', run_id=run.id, page=pagination.next_num) }}">&raquo;</a>
+    </li>
+  </ul>
+</nav>
+<p class="text-center text-muted small">{{ pagination.total }} domain(s) in this run</p>
+{% endif %}
+
+{% else %}
+<div class="text-center py-4 text-muted">No domains recorded for this run.</div>
+{% endif %}
+{% endblock %}

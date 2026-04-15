@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <h2 class="mb-0">Run History</h2>
+  <a href="{{ url_for('main.scrape') }}" class="btn btn-primary btn-sm">New Scrape</a>
+</div>
+
+<!-- TLD filter -->
+<form method="get" action="{{ url_for('main.history') }}" class="row g-2 mb-3">
+  <div class="col-sm-4">
+    <select class="form-select form-select-sm" name="tld">
+      <option value="">All TLDs</option>
+      {% for t in tld_list %}
+      <option value="{{ t }}" {% if t == tld_filter %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+    <a href="{{ url_for('main.history') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+  </div>
+</form>
+
+{% if runs %}
+<div class="table-responsive">
+  <table class="table table-hover table-sm align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>TLD</th>
+        <th>Mode</th>
+        <th>Started</th>
+        <th>Finished</th>
+        <th class="text-end">Found</th>
+        <th class="text-end">Saved</th>
+        <th class="text-end">Deleted</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td class="text-muted small">{{ run.id }}</td>
+        <td><span class="badge bg-secondary">{{ run.tld }}</span></td>
+        <td>
+          {% if run.mode == "replace" %}
+            <span class="badge bg-warning text-dark">replace</span>
+          {% else %}
+            <span class="badge bg-info text-dark">append</span>
+          {% endif %}
+        </td>
+        <td class="small">{{ run.started_at.strftime('%Y-%m-%d %H:%M') if run.started_at else '—' }}</td>
+        <td class="small">
+          {% if run.finished_at %}
+            {{ run.finished_at.strftime('%Y-%m-%d %H:%M') }}
+          {% else %}
+            <span class="text-warning">running…</span>
+          {% endif %}
+        </td>
+        <td class="text-end">{{ run.domains_found }}</td>
+        <td class="text-end text-success fw-semibold">{{ run.domains_inserted }}</td>
+        <td class="text-end {% if run.domains_deleted > 0 %}text-danger{% else %}text-muted{% endif %}">
+          {{ run.domains_deleted or '—' }}
+        </td>
+        <td>
+          <a href="{{ url_for('main.run_detail', run_id=run.id) }}"
+             class="btn btn-outline-primary btn-sm">View</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav aria-label="History pagination">
+  <ul class="pagination pagination-sm justify-content-center">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('main.history', page=pagination.prev_num, tld=tld_filter) }}">&laquo;</a>
+    </li>
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+      <li class="page-item {% if p == pagination.page %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('main.history', page=p, tld=tld_filter) }}">{{ p }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('main.history', page=pagination.next_num, tld=tld_filter) }}">&raquo;</a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5 text-muted">
+  <p class="fs-5">No scrape runs found.</p>
+  <a href="{{ url_for('main.scrape') }}" class="btn btn-primary">Start your first scrape</a>
+</div>
+{% endif %}
+{% endblock %}
