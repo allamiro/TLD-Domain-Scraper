@@ -12,6 +12,7 @@ class ScrapeRun(db.Model):
     job_id     = db.Column(db.String(64), nullable=False, index=True)
     tld        = db.Column(db.String(64), nullable=False)
     mode       = db.Column(db.String(16), nullable=False, default="append")
+    engines    = db.Column(db.String(128), nullable=True)   # comma-separated engine keys
     # append = keep old rows + insert new ones
     # replace = delete all existing rows for this TLD before inserting
 

@@ -22,19 +22,25 @@
         </div>
 
         <div class="row text-center g-2">
-          <div class="col-4">
+          <div class="col-3">
             <div class="border rounded p-2">
               <div id="stat-tld" class="fs-5 fw-bold text-primary">—</div>
               <div class="text-muted small">Current TLD</div>
             </div>
           </div>
-          <div class="col-4">
+          <div class="col-3">
+            <div class="border rounded p-2">
+              <div id="stat-engine" class="fs-5 fw-bold text-warning">—</div>
+              <div class="text-muted small">Engine</div>
+            </div>
+          </div>
+          <div class="col-3">
             <div class="border rounded p-2">
               <div id="stat-page" class="fs-5 fw-bold text-info">0</div>
               <div class="text-muted small">Page</div>
             </div>
           </div>
-          <div class="col-4">
+          <div class="col-3">
             <div class="border rounded p-2">
               <div id="stat-domains" class="fs-5 fw-bold text-success">0</div>
               <div class="text-muted small">Domains found</div>
@@ -100,6 +106,7 @@
   const tldBar      = document.getElementById("tld-bar");
   const tldCounter  = document.getElementById("tld-counter");
   const statTld     = document.getElementById("stat-tld");
+  const statEngine  = document.getElementById("stat-engine");
   const statPage    = document.getElementById("stat-page");
   const statDomains = document.getElementById("stat-domains");
   const badge       = document.getElementById("status-badge");
@@ -165,9 +172,10 @@
         tldCounter.textContent = (job.tld_index || 0) + " / " + job.total_tlds;
 
         // Stats
-        statTld.textContent     = job.current_tld || "—";
-        statPage.textContent    = job.current_page || 0;
-        statDomains.textContent = job.domains_found || 0;
+        statTld.textContent     = job.current_tld    || "—";
+        statEngine.textContent  = job.current_engine || "—";
+        statPage.textContent    = job.current_page   || 0;
+        statDomains.textContent = job.domains_found  || 0;
 
         // Log
         renderLog(job.log || []);

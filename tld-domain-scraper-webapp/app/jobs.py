@@ -20,6 +20,7 @@ def create_job(tlds: list[str]) -> str:
             "total_tlds": len(tlds),
             "tld_index": 0,            # which TLD we are on (0-based)
             "current_tld": None,
+            "current_engine": None,
             "current_page": 0,
             "domains_found": 0,        # running total across all TLDs
             "domains_inserted": 0,

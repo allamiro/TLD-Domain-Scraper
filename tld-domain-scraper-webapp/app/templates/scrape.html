@@ -2,12 +2,13 @@
 
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-lg-6">
+  <div class="col-lg-7">
     <h2 class="mb-1">Scrape Domains</h2>
-    <p class="text-muted mb-4">Enter one or more TLDs separated by commas and choose how to handle existing data.</p>
+    <p class="text-muted mb-4">Enter TLDs, pick your search engines, and choose how to handle existing data.</p>
 
     <form action="{{ url_for('main.scrape') }}" method="post" id="scrape-form">
 
+      <!-- TLDs -->
       <div class="mb-3">
         <label for="tlds" class="form-label fw-semibold">TLDs (comma-separated)</label>
         <input type="text" class="form-control" id="tlds" name="tlds"
@@ -15,15 +16,39 @@
         <div class="form-text">Example: <code>.ir, .co.ir, .org.ir</code></div>
       </div>
 
+      <!-- Search engines -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Search Engines</label>
+        <div class="row g-2">
+          {% for key, engine in all_engines.items() %}
+          <div class="col-sm-6">
+            <div class="card h-100">
+              <div class="card-body py-2 px-3 d-flex align-items-start gap-2">
+                <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
+                       name="engines" id="engine-{{ key }}" value="{{ key }}"
+                       {% if key in default_engines %}checked{% endif %}>
+                <label class="form-check-label w-100" for="engine-{{ key }}">
+                  <span class="fw-semibold">{{ engine.display_name }}</span>
+                  <div class="text-muted small engine-note-{{ key }}"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="form-text mt-1">Using more engines finds more domains but takes longer.</div>
+      </div>
+
+      <!-- Mode -->
       <div class="mb-4">
         <label class="form-label fw-semibold">Mode</label>
-        <div class="d-flex gap-3">
+        <div class="d-flex gap-4">
           <div class="form-check">
             <input class="form-check-input" type="radio" name="mode" id="mode-append"
                    value="append" checked>
             <label class="form-check-label" for="mode-append">
               <strong>Append</strong>
-              <div class="text-muted small">Keep all previously found domains. Only add new ones discovered in this run.</div>
+              <div class="text-muted small">Keep existing domains, only add new ones.</div>
             </label>
           </div>
           <div class="form-check">
@@ -31,7 +56,7 @@
                    value="replace">
             <label class="form-check-label" for="mode-replace">
               <strong>Replace</strong>
-              <div class="text-muted small">Delete all existing domains for the selected TLD(s) and replace with this run's results.</div>
+              <div class="text-muted small">Delete existing domains for the TLD, re-insert fresh results.</div>
             </label>
           </div>
         </div>
@@ -48,4 +73,18 @@
     </div>
   </div>
 </div>
+
+<script>
+// Populate engine descriptions
+const engineNotes = {
+  google:     "~100 results/page · best for English content",
+  bing:       "~50 results/page · often finds more unique domains",
+  duckduckgo: "~30 results/page · privacy-focused, Bing-powered",
+  yandex:     "~50 results/page · excellent for Persian / non-Latin TLDs",
+};
+Object.entries(engineNotes).forEach(function([key, note]) {
+  const el = document.querySelector(".engine-note-" + key);
+  if (el) el.textContent = note;
+});
+</script>
 {% endblock %}

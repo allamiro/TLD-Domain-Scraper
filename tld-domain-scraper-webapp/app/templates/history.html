@@ -30,6 +30,7 @@
         <th>#</th>
         <th>TLD</th>
         <th>Mode</th>
+        <th>Engines</th>
         <th>Started</th>
         <th>Finished</th>
         <th class="text-end">Found</th>
@@ -50,6 +51,7 @@
             <span class="badge bg-info text-dark">append</span>
           {% endif %}
         </td>
+        <td class="small text-muted">{{ run.engines or '—' }}</td>
         <td class="small">{{ run.started_at.strftime('%Y-%m-%d %H:%M') if run.started_at else '—' }}</td>
         <td class="small">
           {% if run.finished_at %}

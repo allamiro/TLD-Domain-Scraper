@@ -21,6 +21,7 @@ from selenium.common.exceptions import WebDriverException
 from app.models import Domain, ScrapeRun
 from app.scraper import run_scraper
 from app import jobs as job_store
+from app.engines import ALL_ENGINES, DEFAULT_ENGINES
 
 bp = Blueprint("main", __name__)
 log = logging.getLogger(__name__)
@@ -51,6 +52,11 @@ def scrape():
         if mode not in ("append", "replace"):
             mode = "append"
 
+        # Multi-select checkboxes — getlist returns [] if none checked
+        engine_keys = request.form.getlist("engines")
+        if not engine_keys:
+            engine_keys = DEFAULT_ENGINES
+
         if not raw:
             flash("Please enter at least one TLD.", "warning")
             return redirect(url_for("main.scrape"))
@@ -64,7 +70,7 @@ def scrape():
             job_store.start_job(job_id)
             with app.app_context():
                 try:
-                    inserted = run_scraper(tlds, job_id=job_id, mode=mode)
+                    inserted = run_scraper(tlds, job_id=job_id, mode=mode, engine_keys=engine_keys)
                     job_store.finish_job(job_id, inserted)
                 except WebDriverException as e:
                     job_store.fail_job(job_id, str(e.msg if hasattr(e, "msg") else e))
@@ -74,7 +80,7 @@ def scrape():
         threading.Thread(target=_run, daemon=True).start()
         return redirect(url_for("main.progress", job_id=job_id))
 
-    return render_template("scrape.html")
+    return render_template("scrape.html", all_engines=ALL_ENGINES, default_engines=DEFAULT_ENGINES)
 
 
 # ── Progress & status ─────────────────────────────────────────────────────────
