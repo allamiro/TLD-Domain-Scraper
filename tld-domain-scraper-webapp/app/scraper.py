@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
@@ -19,8 +20,10 @@ MAX_PAGES = 10  # per TLD — keep reasonable for a web request context
 
 
 def _create_driver() -> webdriver.Chrome:
-    """Return a headless Chrome WebDriver suitable for running inside Docker."""
+    """Return a headless Chromium WebDriver suitable for running inside Docker."""
     options = Options()
+    # Use the system Chromium installed via apt (works on amd64 and arm64)
+    options.binary_location = "/usr/bin/chromium"
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -30,7 +33,8 @@ def _create_driver() -> webdriver.Chrome:
         "user-agent=Mozilla/5.0 (X11; Linux x86_64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     )
-    return webdriver.Chrome(options=options)
+    service = Service(executable_path="/usr/bin/chromedriver")
+    return webdriver.Chrome(service=service, options=options)
 
 
 def _get_base_domain(url: str) -> str | None:

@@ -1,8 +1,14 @@
 FROM python:3.9-slim
 
+# Install Chromium and ChromeDriver (works on both amd64 and arm64)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        chromium \
+        chromium-driver \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /webapp
 
-# Copy requirements first so this layer is cached unless dependencies change
+# Install Python deps before copying source for better layer caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
