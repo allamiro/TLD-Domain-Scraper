@@ -59,7 +59,8 @@ tlds = [
 EXCLUDED_PATTERNS = [".gov.ir", "translate.google.com", "google.com/search"]
 
 # Maximum pages to scrape per TLD
-MAX_PAGES = 30
+MAX_PAGES = 10        # max pagination pages to follow per TLD
+RESULTS_PER_PAGE = 100  # &num= — Google supports up to 100 results per page
 
 
 def create_driver() -> webdriver.Chrome:
@@ -141,7 +142,7 @@ def scrape_tld(driver: webdriver.Chrome, tld: str) -> set:
     domain_set: set[str] = set()
 
     query = f"site:{tld} -site:.gov.ir"
-    url = f"https://www.google.com/search?q={query}"
+    url = f"https://www.google.com/search?q={query}&num={RESULTS_PER_PAGE}"
     driver.get(url)
     time.sleep(2)
 

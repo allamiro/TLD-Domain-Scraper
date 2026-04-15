@@ -22,7 +22,8 @@ from app import jobs as job_store
 log = logging.getLogger(__name__)
 
 EXCLUDED_PATTERNS = [".gov.ir", "translate.google.com", "google.com/search"]
-MAX_PAGES = 10
+MAX_PAGES = 10        # max pagination pages to follow
+RESULTS_PER_PAGE = 100  # &num= param — Google supports up to 100
 
 
 def _create_driver() -> webdriver.Chrome:
@@ -129,7 +130,9 @@ def run_scraper(tlds: list[str], job_id: str | None = None,
             # --- Scrape pages ---
             found_domains: set[str] = set()
             query = f"site:{tld} -site:.gov.ir"
-            driver.get(f"https://www.google.com/search?q={query}")
+            # &num=100 requests 100 results per page (Google's maximum)
+            # vs the default 10 — gives 10x more result slots per page
+            driver.get(f"https://www.google.com/search?q={query}&num={RESULTS_PER_PAGE}")
             time.sleep(2)
 
             for page in range(MAX_PAGES):
