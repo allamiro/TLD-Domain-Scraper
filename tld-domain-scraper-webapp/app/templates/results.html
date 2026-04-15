@@ -1,25 +1,100 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h2>Scraped Domains</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>URL</th>
-            <th>TLD</th>
-            <th>Timestamp</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for domain in domains %}
-        <tr>
-            <td>{{ domain.id }}</td>
-            <td>{{ domain.url }}</td>
-            <td>{{ domain.tld }}</td>
-            <td>{{ domain.timestamp }}</td>
-        </tr>
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">Scraped Domains</h2>
+    <a href="{{ url_for('main.download', tld=tld_filter) }}" class="btn btn-success btn-sm" id="download-btn">
+        Download CSV
+    </a>
+</div>
+
+<!-- Filters -->
+<form method="get" action="{{ url_for('main.results') }}" class="row g-2 mb-3">
+    <div class="col-sm-5">
+        <input type="text" class="form-control form-control-sm" name="q"
+               placeholder="Search URL..." value="{{ search_query }}">
+    </div>
+    <div class="col-sm-4">
+        <select class="form-select form-select-sm" name="tld">
+            <option value="">All TLDs</option>
+            {% for t in tld_list %}
+            <option value="{{ t }}" {% if t == tld_filter %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-sm-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+        <a href="{{ url_for('main.results') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+    </div>
+</form>
+
+{% if domains %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>URL</th>
+                <th>TLD</th>
+                <th>Scraped At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in domains %}
+            <tr>
+                <td>{{ domain.id }}</td>
+                <td>
+                    <a href="{{ domain.url }}" target="_blank" rel="noopener noreferrer">{{ domain.url }}</a>
+                </td>
+                <td><span class="badge bg-secondary">{{ domain.tld }}</span></td>
+                <td class="text-muted small">{{ domain.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav aria-label="Results pagination">
+    <ul class="pagination pagination-sm justify-content-center">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link"
+               href="{{ url_for('main.results', page=pagination.prev_num, q=search_query, tld=tld_filter) }}">
+                &laquo; Prev
+            </a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('main.results', page=p, q=search_query, tld=tld_filter) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
         {% endfor %}
-    </tbody>
-</table>
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link"
+               href="{{ url_for('main.results', page=pagination.next_num, q=search_query, tld=tld_filter) }}">
+                Next &raquo;
+            </a>
+        </li>
+    </ul>
+</nav>
+<p class="text-center text-muted small">
+    Page {{ pagination.page }} of {{ pagination.pages }} &mdash; {{ pagination.total }} total result(s)
+</p>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5 text-muted">
+    <p class="fs-5">No domains found.</p>
+    {% if search_query or tld_filter %}
+    <p>Try adjusting your filters or <a href="{{ url_for('main.results') }}">reset them</a>.</p>
+    {% else %}
+    <p>Run a scrape from the <a href="{{ url_for('main.scrape') }}">Scrape Domains</a> page to get started.</p>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

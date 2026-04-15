@@ -1,7 +1,21 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h2>Download Data</h2>
-<p>Click the button below to download the scraped domains as a CSV file.</p>
-<a href="{{ url_for('main.download') }}" class="btn btn-success">Download CSV</a>
+<div class="row justify-content-center">
+    <div class="col-lg-6 text-center">
+        <h2 class="mb-3">Download Data</h2>
+        <p class="text-muted mb-4">Export all scraped domains as a CSV file. Use the optional filter to download
+            only domains for a specific TLD.</p>
+
+        <form method="get" action="{{ url_for('main.download') }}" class="d-flex justify-content-center gap-2 mb-3">
+            <input type="text" class="form-control w-auto" name="tld"
+                   placeholder="Filter by TLD (optional)">
+            <button type="submit" class="btn btn-success">Download CSV</button>
+        </form>
+
+        <p class="text-muted small">
+            Or <a href="{{ url_for('main.download') }}">download all domains</a> without filtering.
+        </p>
+    </div>
+</div>
 {% endblock %}

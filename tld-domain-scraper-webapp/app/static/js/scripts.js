@@ -1,68 +1,59 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Scraping Form: Show loading indicator
-    const scrapeForm = document.querySelector("form[action='/scrape']");
-    const scrapeButton = scrapeForm ? scrapeForm.querySelector("button[type='submit']") : null;
-    if (scrapeButton) {
+    // ── Scrape form: show spinner and disable button on submit ──
+    const scrapeForm = document.getElementById("scrape-form");
+    const scrapeBtn = document.getElementById("scrape-btn");
+    const scrapeProgress = document.getElementById("scrape-progress");
+
+    if (scrapeForm && scrapeBtn) {
         scrapeForm.addEventListener("submit", function () {
-            scrapeButton.innerHTML = "Scraping...";
-            scrapeButton.disabled = true;
+            scrapeBtn.disabled = true;
+            scrapeBtn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Scraping...';
+            if (scrapeProgress) scrapeProgress.classList.remove("d-none");
         });
     }
 
-    // Results Page: Dynamic table search
-    const searchInput = document.getElementById("search");
-    const tableRows = document.querySelectorAll("table tbody tr");
-    if (searchInput && tableRows) {
-        searchInput.addEventListener("input", function () {
-            const query = searchInput.value.toLowerCase();
-            tableRows.forEach((row) => {
-                const cells = Array.from(row.cells);
-                const matches = cells.some((cell) => cell.textContent.toLowerCase().includes(query));
-                row.style.display = matches ? "" : "none";
-            });
-        });
-    }
-
-    // Download Button: Confirm action
-    const downloadButton = document.querySelector("a[href='/download']");
-    if (downloadButton) {
-        downloadButton.addEventListener("click", function (event) {
-            const confirmDownload = confirm("Are you sure you want to download the domains as a CSV file?");
-            if (!confirmDownload) {
+    // ── Download button: confirm before downloading ──
+    const downloadBtn = document.getElementById("download-btn");
+    if (downloadBtn) {
+        downloadBtn.addEventListener("click", function (event) {
+            if (!confirm("Download scraped domains as a CSV file?")) {
                 event.preventDefault();
             }
         });
     }
 
-    // Toast Notifications
-    function showToast(message, type = "success") {
-        const toastContainer = document.getElementById("toast-container");
-        const toast = document.createElement("div");
-        toast.className = `toast align-items-center text-bg-${type} border-0 show`;
-        toast.role = "alert";
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        `;
-        toastContainer.appendChild(toast);
-        setTimeout(() => {
-            toastContainer.removeChild(toast);
-        }, 3000);
-    }
-
-    // Example Toast on Page Load
-    showToast("Welcome to TLD Domain Scraper!", "success");
-
-    // Highlight Active Navigation Link
+    // ── Highlight the active nav link ──
     const navLinks = document.querySelectorAll(".navbar-nav .nav-link");
     const currentPath = window.location.pathname;
-    navLinks.forEach((link) => {
-        if (link.getAttribute("href") === currentPath) {
+    navLinks.forEach(function (link) {
+        const href = link.getAttribute("href");
+        if (href && currentPath.startsWith(href) && href !== "/") {
             link.classList.add("active");
-        } else {
-            link.classList.remove("active");
+        } else if (href === "/" && currentPath === "/") {
+            link.classList.add("active");
         }
     });
+
+    // ── Toast helper (used for flash-free JS notifications if needed) ──
+    function showToast(message, type) {
+        type = type || "success";
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+        const toast = document.createElement("div");
+        toast.className = "toast align-items-center text-bg-" + type + " border-0 show";
+        toast.role = "alert";
+        toast.innerHTML =
+            '<div class="d-flex">' +
+            '<div class="toast-body">' + message + "</div>" +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+            "</div>";
+        container.appendChild(toast);
+        setTimeout(function () {
+            if (container.contains(toast)) container.removeChild(toast);
+        }, 4000);
+    }
+
+    // Expose globally in case other scripts need it
+    window.showToast = showToast;
 });

@@ -1,9 +1,39 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="jumbotron text-center">
-    <h1 class="display-4">Welcome to TLD Domain Scraper</h1>
-    <p class="lead">Easily scrape and manage domain lists across multiple TLDs.</p>
-    <a class="btn btn-primary btn-lg" href="{{ url_for('main.scrape') }}" role="button">Start Scraping</a>
+<div class="hero-banner text-center text-white rounded p-5 mb-4">
+    <h1 class="display-4 fw-bold">TLD Domain Scraper</h1>
+    <p class="lead mb-4">Scrape, store, and export domain lists across multiple top-level domains.</p>
+    <div class="d-flex justify-content-center gap-3">
+        <a class="btn btn-light btn-lg" href="{{ url_for('main.scrape') }}">Start Scraping</a>
+        <a class="btn btn-outline-light btn-lg" href="{{ url_for('main.results') }}">View Results</a>
+    </div>
+</div>
+
+<div class="row g-4 text-center">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Multi-TLD Support</h5>
+                <p class="card-text text-muted">Scrape domains across any combination of TLDs in a single run.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Duplicate-Free Storage</h5>
+                <p class="card-text text-muted">Results are deduplicated before being saved to the database.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">CSV Export</h5>
+                <p class="card-text text-muted">Download all scraped domains as a CSV file, with optional TLD filter.</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

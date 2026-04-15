@@ -16,33 +16,62 @@ By targeting specific TLDs and excluding certain government websites (to avoid r
   Elections, protests, policy changes, or international relations often generate a significant amount of online discussion, with articles, reports, and press releases published across many different TLDs.
 
 - **Tracking Events or Natural Disasters:**
-  Natural disasters, including earthquakes, floods, and hurricanes, often lead to a spike in online reporting. Local news websites, emergency portals, and community blogs may provide early warnings, first-hand accounts, or official updates. Scraping domains in regions frequently affected by natural disasters (e.g., .au for Australia, .jp for Japan) can enable automated monitoring of related information.
+  Natural disasters, including earthquakes, floods, and hurricanes, often lead to a spike in online reporting. Local news websites, emergency portals, and community blogs may provide early warnings, first-hand accounts, or official updates.
 
 - **Following Disease Outbreaks:**
-  Epidemics and pandemics, such as the recent COVID-19 outbreak, produce immense amounts of information from government health agencies, international organizations (e.g., WHO), research institutions, and news outlets. Additionally, different countries may have official health portals.
+  Epidemics and pandemics produce immense amounts of information from government health agencies, international organizations (e.g., WHO), research institutions, and news outlets.
 
 - **Detect Cyber Threats:**
   Identify which domains correlate with cyber threats and bad actors.
 
 - **Academic Research**
-* Computational Social Science: Analyzing news dissemination, social movements, and public sentiment across different countries by tracking domain-specific reporting patterns.
-* Linguistic and Sentiment Analysis: Studying variations in language use, framing, and sentiment in news articles and blog posts related to geopolitical events, crises, or policy changes.
-* Network Analysis and Misinformation Detection: Mapping the propagation of news, rumors, and misinformation by analyzing cross-domain citations and content similarities.
-* Crisis Informatics: Understanding how real-time digital information flows during natural disasters or pandemics, helping researchers build models for emergency response and decision-making.
-* Cybersecurity Research: Investigating domain registration patterns, malicious domain clustering, and correlations between TLDs and cyber threat activities.
-* Public Health Surveillance: Utilizing automated scraping of government and health organization websites to monitor emerging disease outbreaks, vaccine distribution updates, or public health advisories.
-* Policy and Governance Studies: Analyzing government portals to track policy implementations, public announcements, and regulatory changes in different jurisdictions.
+  * Computational Social Science, Linguistic Analysis, Network Analysis, Crisis Informatics, Cybersecurity Research, Public Health Surveillance, Policy and Governance Studies.
 
 ### Plan
-1. Create a list of domain names across various Top-Level Domains (TLDs) by using the Python-based web scraper.
-2. Process those websites and extract meaningful information: This involves scraping individual pages, organizing the collected data, and preparing it for analysis or indexing into a search engine or analytics platform.
+1. Create a list of domain names across various TLDs using the Python-based web scraper.
+2. Process those websites and extract meaningful information.
 3. Store the scraped content in a structured format.
-4. Preprocess the data by cleaning the text if needed.
+4. Preprocess and clean text data.
 5. Perform language detection and translation to English.
-6. Run text analysis techniques, such as Named Entity Recognition (NER) and sentiment analysis techniques.
-7. Index the cleaned and processed data into a search engine (e.g., Elasticsearch) or import it into an analytics platform to enable real-time querying and trend analysis.
-8. Monitor the data over time to detect emerging patterns or trends.
+6. Run NER and sentiment analysis.
+7. Index the processed data into a search engine or analytics platform.
+8. Monitor data over time to detect emerging patterns.
 9. Visualize the results.
+
+---
+
+## What's New (Recent Improvements)
+
+### CLI Scraper (`tld-domains-scraper.py`)
+
+| Area | Before | After |
+|---|---|---|
+| TLD matching | `tld.lower() in href.lower()` — false positives (`.ir` matches `.ireland`) | Hostname-exact suffix check using `urlparse` |
+| Driver lifecycle | No cleanup on error | `try/finally` always calls `driver.quit()` |
+| Driver config | Visible browser window | Headless Chrome with anti-detection UA |
+| Output location | Saved to wherever the script runs | `output/` subdirectory next to the script |
+| Filenames | `.PERSIANBLOG.IR` → `persianblogir.txt` | Structured: `iran_persianblog_ir.txt` |
+| Logging | `print()` calls scattered throughout | `logging` module with timestamps |
+| Summary | Per-TLD files only | Combined `output/all_domains.txt` (url + tld columns) |
+| Error handling | Unhandled exceptions left browser open | `WebDriverException` caught and logged |
+
+### Web App (`tld-domain-scraper-webapp/`)
+
+| Area | Before | After |
+|---|---|---|
+| **Critical bug** | `tld=tld` in DB loop — all rows labelled with the *last* TLD | Each domain correctly tagged with its own TLD |
+| Download route | Stub (`pass`) — returned nothing | Full CSV export with optional TLD filter |
+| Chrome in Docker | `webdriver.Chrome()` — no headless flags, fails without a display | Headless with `--no-sandbox`, `--disable-dev-shm-usage` |
+| DB URI | Hardcoded `postgresql://user:password@db:5432/domains` | Read from `DATABASE_URL` env var; falls back to SQLite for local dev |
+| Blueprint wiring | `register_blueprint` in `run.py` only | Registered inside `create_app()` so the factory is self-contained |
+| `tld` column length | `String(10)` — too short for `.PERSIANBLOG.IR` | `String(64)` |
+| Duplicate domains | No constraint — same URL inserted multiple times | `UniqueConstraint("url", "tld")` + skip-on-duplicate logic in scraper |
+| Deprecated `datetime.utcnow()` | `datetime.utcnow()` (Python 3.12 deprecated) | `datetime.now(timezone.utc)` |
+| Results page | No search, no filter, no pagination, no empty state | URL search + TLD dropdown filter + server-side pagination (50/page) + empty state message |
+| Bootstrap 5 `.jumbotron` | Used removed class — rendered unstyled | Replaced with custom `.hero-banner` using CSS gradient |
+| Flash messages | No flash messages in templates | `layout.html` renders dismissible Bootstrap alerts |
+| JS scrape button | Text changed but no spinner | Spinner shown + button disabled on submit |
+| `docker-compose.yml` | Deprecated `version:` field; `latest` Postgres image; no healthcheck; webapp could start before DB was ready | Removed `version:`; pinned `postgres:16-alpine`; `healthcheck` + `depends_on: condition: service_healthy` |
 
 ---
 
@@ -60,7 +89,8 @@ sudo apt install python3 python3-venv python3-dev chromium-driver chromium-brows
 ```
 
 ### **For macOS M1/M2:**
-* when you run the script in MAC os make sure you allow chromium and chromedriver to run through the security settings. 
+> When running on macOS, allow Chromium and chromedriver to run via System Settings → Security.
+
 1. **Install Homebrew:**
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -68,83 +98,95 @@ sudo apt install python3 python3-venv python3-dev chromium-driver chromium-brows
 
 2. **Install Python, Chromium, and ChromeDriver:**
    ```bash
-   brew install python@3.9
+   brew install python@3.12
    brew install chromium chromedriver
    ```
 
-3. **Create a Python Virtual Environment and Activate it:**
+3. **Create and activate a virtual environment:**
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
 
-4. **Install Required Libraries:**
+4. **Install required libraries:**
    ```bash
-   pip install selenium requests
+   pip install selenium
    ```
 
 ---
 
+## Running the CLI Scraper
 
-## How to deploy the app
-
-### Clone the Repository
 ```bash
+# Clone the repo
 git clone https://github.com/allamiro/TLD-Domain-Scraper.git
 cd TLD-Domain-Scraper
+
+# Set up virtualenv (optional but recommended)
+python3 -m venv venv && source venv/bin/activate
+pip install selenium
+
+# Run the scraper
+python tld-domains-scraper.py
 ```
+
+Output files are written to `output/`:
+- `iran_<tld>.txt` — one file per TLD, one base domain per line
+- `all_domains.txt` — combined file with `url<TAB>tld` columns
+
+To target different TLDs, edit the `tlds` list at the top of `tld-domains-scraper.py`.
 
 ---
 
-### Update Code for Specific TLDs
+## Running the Web App
 
-Update these portions of the code to reflect the target TLDs, government site exclusions, and the country name you're querying. A complete list of TLDs for each country can be found at [Whois Data Center](https://whoisdatacenter.com/country/).
+### With Docker Compose (recommended)
 
-1. **Edit `tld-domains-scraper.py`:**
-
-```python
-# List of TLDs to search
-tlds = [
-    ".IR",
-    ".PERSIANBLOG.IR",
-    ".RZB.IR",
-    ".CO.IR",
-    ".AC.IR",
-    ".SCH.IR",
-    ".ORG.IR",
-    ".ID.IR",
-    ".R98.IR",
-    ".EPAGE.IR"
-]
-
-# Base query excluding .gov.ir domains
-base_query = "-site:.gov.ir"
-
-if href and tld.lower() in href.lower() and '.gov.ir' not in href and 'translate.google.com' not in href:
+```bash
+cd tld-domain-scraper-webapp
+docker compose up --build
 ```
 
-2. **Update Output File Naming Convention:**
-```python
-filename = f"iran_{tld_clean}.txt"
+Then open [http://localhost:5000](http://localhost:5000).
+
+> The webapp waits for PostgreSQL to pass its healthcheck before starting, so there is no need to add manual sleep delays.
+
+### Without Docker (local dev with SQLite)
+
+```bash
+cd tld-domain-scraper-webapp
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python run.py
 ```
+
+SQLite is used automatically when `DATABASE_URL` is not set.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `DATABASE_URL` | `sqlite:///domains.db` | SQLAlchemy-compatible DB URI |
+| `SECRET_KEY` | `dev-secret-change-me` | Flask secret key — **change in production** |
+
+---
+
+## Customising Target TLDs
+
+Edit the `tlds` list in `tld-domains-scraper.py` (CLI) or submit them through the web form. A complete list of country-code TLDs is available at [Whois Data Center](https://whoisdatacenter.com/country/).
 
 ---
 
 ## Disclaimer
 
-This project is provided for **educational purposes only**. The creators and contributors of this project are not responsible for any misuse or illegal activities performed with this code.
+This project is provided for **educational purposes only**. The creators and contributors are not responsible for any misuse or illegal activities performed with this code.
 
-The script involves manual CAPTCHA solving and doesn’t use automated CAPTCHA-solving services or tools. As long as a human (you) is solving the CAPTCHA, it may be considered compliant with the spirit of CAPTCHA usage. However, repeated automation requests or violating website terms of service may result in consequences like IP bans.
+The script includes manual CAPTCHA handling and does not use automated CAPTCHA-solving services. Repeated automation requests or violating a website's terms of service may result in IP bans.
 
-### Responsibilities of the User:
-- Ensure that your use of this tool complies with relevant laws, regulations, and website terms of service.
+**Responsibilities of the User:**
+- Ensure compliance with relevant laws, regulations, and website terms of service.
 - This tool is provided "as is," without warranties of any kind.
 - Use at your own risk.
 
----
-
 ### No Warranty
 This tool is provided **without any warranties**, express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
-
-### Use at Your Own Risk
-By using this tool, you agree to use it at your own risk. The developers assume no liability for any legal or financial consequences resulting from the misuse or abuse of this tool.

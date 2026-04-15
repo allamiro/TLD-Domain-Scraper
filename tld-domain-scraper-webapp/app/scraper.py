@@ -1,36 +1,135 @@
-import os
+import logging
+import random
+import time
+from urllib.parse import urlparse
+
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from datetime import datetime
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+
 from app.models import Domain, db
 
-def run_scraper(tlds):
-    # Initialize WebDriver (ensure chromedriver is installed)
-    driver = webdriver.Chrome()
+log = logging.getLogger(__name__)
 
-    base_query = "-site:.gov"  # Exclude government sites
-    scraped_domains = []
+EXCLUDED_PATTERNS = [".gov.ir", "translate.google.com", "google.com/search"]
+MAX_PAGES = 10  # per TLD — keep reasonable for a web request context
 
-    for tld in tlds:
-        query = f"site:{tld} {base_query}"
-        driver.get(f"https://www.google.com/search?q={query}")
-        links = driver.find_elements(By.CSS_SELECTOR, "a")
 
-        for link in links:
-            href = link.get_attribute("href")
-            if href and tld.lower() in href.lower() and '.gov' not in href:
-                scraped_domains.append(href)
+def _create_driver() -> webdriver.Chrome:
+    """Return a headless Chrome WebDriver suitable for running inside Docker."""
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+    return webdriver.Chrome(options=options)
 
-    driver.quit()
 
-    # Store in PostgreSQL
-    for domain in scraped_domains:
-        new_domain = Domain(
-            url=domain,
-            tld=tld,
-            timestamp=datetime.utcnow()
+def _get_base_domain(url: str) -> str | None:
+    """Return scheme://netloc, or None if the URL is malformed."""
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme and parsed.netloc:
+            return f"{parsed.scheme}://{parsed.netloc}"
+    except Exception:
+        pass
+    return None
+
+
+def _tld_matches(href: str, tld: str) -> bool:
+    """
+    True only when the URL hostname ends with the given TLD suffix.
+    Prevents false positives like '.ir' matching inside '.ireland'.
+    """
+    try:
+        host = urlparse(href).netloc.lower().rstrip(".")
+        suffix = tld.lower().lstrip(".")
+        return host == suffix or host.endswith("." + suffix)
+    except Exception:
+        return False
+
+
+def _is_excluded(href: str) -> bool:
+    return any(pat in href for pat in EXCLUDED_PATTERNS)
+
+
+def _get_next_button(driver: webdriver.Chrome):
+    try:
+        return driver.find_element(
+            By.XPATH, "//a[@id='pnnext' or contains(text(),'Next')]"
         )
-        db.session.add(new_domain)
+    except NoSuchElementException:
+        return None
 
-    db.session.commit()
-    return len(scraped_domains)  # Return count of scraped domains
+
+def run_scraper(tlds: list[str]) -> int:
+    """
+    Scrape Google for each TLD, persist unique base domains to the database,
+    and return the total number of new domains inserted.
+    """
+    driver = _create_driver()
+    total_inserted = 0
+
+    try:
+        for tld in tlds:
+            tld = tld.strip()
+            if not tld:
+                continue
+
+            log.info(f"Scraping TLD: {tld}")
+            found_domains: set[str] = set()
+
+            query = f"site:{tld} -site:.gov.ir"
+            driver.get(f"https://www.google.com/search?q={query}")
+            time.sleep(2)
+
+            for page in range(MAX_PAGES):
+                links = driver.find_elements(By.CSS_SELECTOR, "a")
+                log.debug(f"  Page {page + 1}: {len(links)} links")
+
+                for link in links:
+                    href = link.get_attribute("href")
+                    if not href or _is_excluded(href):
+                        continue
+                    if _tld_matches(href, tld):
+                        base = _get_base_domain(href)
+                        if base:
+                            found_domains.add(base)
+
+                next_btn = _get_next_button(driver)
+                if next_btn:
+                    next_btn.click()
+                    time.sleep(random.uniform(3, 5))
+                else:
+                    break
+
+            log.info(f"  Found {len(found_domains)} unique domains for {tld}")
+
+            # Persist — skip duplicates that are already in the DB
+            existing_urls = {
+                row.url
+                for row in Domain.query.filter_by(tld=tld).with_entities(Domain.url).all()
+            }
+
+            new_domains = [d for d in found_domains if d not in existing_urls]
+            for url in new_domains:
+                db.session.add(Domain(url=url, tld=tld))
+
+            db.session.commit()
+            total_inserted += len(new_domains)
+            log.info(f"  Inserted {len(new_domains)} new records for {tld}")
+
+    except WebDriverException as e:
+        log.error(f"WebDriver error during scraping: {e}")
+        db.session.rollback()
+        raise
+    finally:
+        driver.quit()
+
+    return total_inserted

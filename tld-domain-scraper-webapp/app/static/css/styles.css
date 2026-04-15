@@ -7,9 +7,9 @@ body {
     margin-bottom: 20px;
 }
 
-.jumbotron {
-    background-color: #007bff;
-    color: white;
-    padding: 50px;
-    border-radius: 10px;
+/* Hero banner replaces Bootstrap 4's .jumbotron (removed in Bootstrap 5) */
+.hero-banner {
+    background: linear-gradient(135deg, #0062cc, #00aaff);
+    padding: 60px 30px;
+    border-radius: 12px;
 }
