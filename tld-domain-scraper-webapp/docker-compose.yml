@@ -2,7 +2,7 @@ services:
   webapp:
     build: .
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       DATABASE_URL: postgresql://user:password@db:5432/domains
       SECRET_KEY: change-me-in-production
