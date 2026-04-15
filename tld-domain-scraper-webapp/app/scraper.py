@@ -9,7 +9,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchElementException,
+    WebDriverException,
+)
 
 from app.models import Domain, db
 
@@ -110,8 +114,15 @@ def run_scraper(tlds: list[str]) -> int:
 
                 next_btn = _get_next_button(driver)
                 if next_btn:
-                    next_btn.click()
-                    time.sleep(random.uniform(3, 5))
+                    try:
+                        # Scroll into view then click via JS to avoid
+                        # ElementNotInteractableException in headless mode
+                        driver.execute_script("arguments[0].scrollIntoView(true);", next_btn)
+                        driver.execute_script("arguments[0].click();", next_btn)
+                        time.sleep(random.uniform(3, 5))
+                    except ElementNotInteractableException:
+                        log.info(f"  Next button not interactable on page {page + 1}, stopping.")
+                        break
                 else:
                     break
 
