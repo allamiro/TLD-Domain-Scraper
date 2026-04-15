@@ -16,17 +16,16 @@ from selenium.common.exceptions import (
 )
 
 from app.models import Domain, db
+from app import jobs as job_store
 
 log = logging.getLogger(__name__)
 
 EXCLUDED_PATTERNS = [".gov.ir", "translate.google.com", "google.com/search"]
-MAX_PAGES = 10  # per TLD — keep reasonable for a web request context
+MAX_PAGES = 10
 
 
 def _create_driver() -> webdriver.Chrome:
-    """Return a headless Chromium WebDriver suitable for running inside Docker."""
     options = Options()
-    # Use the system Chromium installed via apt (works on amd64 and arm64)
     options.binary_location = "/usr/bin/chromium"
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
@@ -42,7 +41,6 @@ def _create_driver() -> webdriver.Chrome:
 
 
 def _get_base_domain(url: str) -> str | None:
-    """Return scheme://netloc, or None if the URL is malformed."""
     try:
         parsed = urlparse(url)
         if parsed.scheme and parsed.netloc:
@@ -53,10 +51,6 @@ def _get_base_domain(url: str) -> str | None:
 
 
 def _tld_matches(href: str, tld: str) -> bool:
-    """
-    True only when the URL hostname ends with the given TLD suffix.
-    Prevents false positives like '.ir' matching inside '.ireland'.
-    """
     try:
         host = urlparse(href).netloc.lower().rstrip(".")
         suffix = tld.lower().lstrip(".")
@@ -78,21 +72,38 @@ def _get_next_button(driver: webdriver.Chrome):
         return None
 
 
-def run_scraper(tlds: list[str]) -> int:
+def _emit(job_id: str | None, message: str) -> None:
+    """Log to both Python logger and the job progress store."""
+    log.info(message)
+    if job_id:
+        job_store.append_log(job_id, message)
+
+
+def run_scraper(tlds: list[str], job_id: str | None = None) -> int:
     """
-    Scrape Google for each TLD, persist unique base domains to the database,
-    and return the total number of new domains inserted.
+    Scrape Google for each TLD and persist unique base domains.
+    If job_id is provided, progress is written to the job store so the
+    browser can poll it in real time.
+    Returns the total number of new domains inserted.
     """
     driver = _create_driver()
     total_inserted = 0
 
     try:
-        for tld in tlds:
+        for idx, tld in enumerate(tlds):
             tld = tld.strip()
             if not tld:
                 continue
 
-            log.info(f"Scraping TLD: {tld}")
+            if job_id:
+                job_store.update_job(
+                    job_id,
+                    tld_index=idx,
+                    current_tld=tld,
+                    current_page=0,
+                )
+
+            _emit(job_id, f"Starting TLD {idx + 1}/{len(tlds)}: {tld}")
             found_domains: set[str] = set()
 
             query = f"site:{tld} -site:.gov.ir"
@@ -100,8 +111,11 @@ def run_scraper(tlds: list[str]) -> int:
             time.sleep(2)
 
             for page in range(MAX_PAGES):
+                if job_id:
+                    job_store.update_job(job_id, current_page=page + 1)
+
                 links = driver.find_elements(By.CSS_SELECTOR, "a")
-                log.debug(f"  Page {page + 1}: {len(links)} links")
+                page_domains: set[str] = set()
 
                 for link in links:
                     href = link.get_attribute("href")
@@ -110,43 +124,56 @@ def run_scraper(tlds: list[str]) -> int:
                     if _tld_matches(href, tld):
                         base = _get_base_domain(href)
                         if base:
-                            found_domains.add(base)
+                            page_domains.add(base)
+
+                found_domains |= page_domains
+                _emit(
+                    job_id,
+                    f"  [{tld}] Page {page + 1}: {len(page_domains)} new domains "
+                    f"(running total: {len(found_domains)})",
+                )
+
+                if job_id:
+                    job_store.update_job(job_id, domains_found=len(found_domains))
 
                 next_btn = _get_next_button(driver)
                 if next_btn:
                     try:
-                        # Scroll into view then click via JS to avoid
-                        # ElementNotInteractableException in headless mode
                         driver.execute_script("arguments[0].scrollIntoView(true);", next_btn)
                         driver.execute_script("arguments[0].click();", next_btn)
                         time.sleep(random.uniform(3, 5))
                     except ElementNotInteractableException:
-                        log.info(f"  Next button not interactable on page {page + 1}, stopping.")
+                        _emit(job_id, f"  [{tld}] Next button not interactable — stopping pagination.")
                         break
                 else:
+                    _emit(job_id, f"  [{tld}] No more pages.")
                     break
 
-            log.info(f"  Found {len(found_domains)} unique domains for {tld}")
+            _emit(job_id, f"  [{tld}] Collected {len(found_domains)} unique domains.")
 
-            # Persist — skip duplicates that are already in the DB
+            # Deduplicate against existing DB records
             existing_urls = {
                 row.url
                 for row in Domain.query.filter_by(tld=tld).with_entities(Domain.url).all()
             }
-
             new_domains = [d for d in found_domains if d not in existing_urls]
             for url in new_domains:
                 db.session.add(Domain(url=url, tld=tld))
 
             db.session.commit()
             total_inserted += len(new_domains)
-            log.info(f"  Inserted {len(new_domains)} new records for {tld}")
+            _emit(job_id, f"  [{tld}] Saved {len(new_domains)} new record(s) to database.")
+
+            if job_id:
+                job_store.update_job(job_id, domains_inserted=total_inserted)
 
     except WebDriverException as e:
-        log.error(f"WebDriver error during scraping: {e}")
+        msg = f"WebDriver error: {e.msg if hasattr(e, 'msg') else str(e)}"
+        _emit(job_id, f"ERROR: {msg}")
         db.session.rollback()
         raise
     finally:
         driver.quit()
+        _emit(job_id, "Browser closed.")
 
     return total_inserted

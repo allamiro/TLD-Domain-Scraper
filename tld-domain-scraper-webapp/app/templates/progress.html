@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="mb-0">Scraping Progress</h2>
+      <span id="status-badge" class="badge fs-6 bg-secondary">Pending</span>
+    </div>
+
+    <!-- Overall progress bar -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="text-muted">TLD progress</small>
+          <small id="tld-counter" class="text-muted">0 / {{ job.total_tlds }}</small>
+        </div>
+        <div class="progress mb-3" style="height: 20px;">
+          <div id="tld-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+               role="progressbar" style="width: 0%">0%</div>
+        </div>
+
+        <div class="row text-center g-2">
+          <div class="col-4">
+            <div class="border rounded p-2">
+              <div id="stat-tld" class="fs-5 fw-bold text-primary">—</div>
+              <div class="text-muted small">Current TLD</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="border rounded p-2">
+              <div id="stat-page" class="fs-5 fw-bold text-info">0</div>
+              <div class="text-muted small">Page</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="border rounded p-2">
+              <div id="stat-domains" class="fs-5 fw-bold text-success">0</div>
+              <div class="text-muted small">Domains found</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live log feed -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <span class="fw-semibold">Live Log</span>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" id="auto-scroll" checked>
+          <label class="form-check-label small" for="auto-scroll">Auto-scroll</label>
+        </div>
+      </div>
+      <div id="log-box"
+           style="height: 280px; overflow-y: auto; background:#1e1e1e; color:#d4d4d4;
+                  font-family: monospace; font-size: 0.8rem; padding: 12px; border-radius: 0 0 4px 4px;">
+        <div class="text-muted">Waiting for scraper to start...</div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div id="action-running" class="d-flex gap-2">
+      <span class="spinner-border spinner-border-sm text-primary mt-1" role="status"></span>
+      <span class="text-muted">Scraping in progress — this page updates automatically.</span>
+    </div>
+
+    <div id="action-done" class="d-none">
+      <div class="alert alert-success">
+        <strong>Done!</strong>
+        <span id="done-summary"></span>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.results') }}" class="btn btn-primary">View Results</a>
+        <a href="{{ url_for('main.scrape') }}" class="btn btn-outline-secondary">New Scrape</a>
+        <a href="{{ url_for('main.download') }}" class="btn btn-outline-success">Download CSV</a>
+      </div>
+    </div>
+
+    <div id="action-error" class="d-none">
+      <div class="alert alert-danger">
+        <strong>Scraping failed.</strong>
+        <span id="error-detail"></span>
+      </div>
+      <a href="{{ url_for('main.scrape') }}" class="btn btn-outline-secondary">Try Again</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  const JOB_ID = "{{ job.id }}";
+  const STATUS_URL = "/status/" + JOB_ID;
+  const POLL_MS = 2000;
+
+  const logBox      = document.getElementById("log-box");
+  const autoScroll  = document.getElementById("auto-scroll");
+  const tldBar      = document.getElementById("tld-bar");
+  const tldCounter  = document.getElementById("tld-counter");
+  const statTld     = document.getElementById("stat-tld");
+  const statPage    = document.getElementById("stat-page");
+  const statDomains = document.getElementById("stat-domains");
+  const badge       = document.getElementById("status-badge");
+
+  const divRunning  = document.getElementById("action-running");
+  const divDone     = document.getElementById("action-done");
+  const divError    = document.getElementById("action-error");
+
+  let lastLogLen = 0;
+  let pollTimer  = null;
+
+  const BADGE_COLORS = {
+    pending: "bg-secondary",
+    running: "bg-primary",
+    done:    "bg-success",
+    error:   "bg-danger",
+  };
+
+  function updateBadge(status) {
+    badge.className = "badge fs-6 " + (BADGE_COLORS[status] || "bg-secondary");
+    badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  function renderLog(lines) {
+    if (lines.length === lastLogLen) return;
+    const newLines = lines.slice(lastLogLen);
+    lastLogLen = lines.length;
+
+    if (lastLogLen === lines.length && lines.length === 0) {
+      logBox.innerHTML = '<div class="text-muted">Waiting for scraper to start...</div>';
+      return;
+    }
+
+    if (logBox.querySelector(".text-muted")) logBox.innerHTML = "";
+
+    newLines.forEach(function (line) {
+      const el = document.createElement("div");
+      el.textContent = line;
+      if (line.includes("ERROR")) el.style.color = "#f48771";
+      else if (line.includes("Saved") || line.includes("Done")) el.style.color = "#89d185";
+      else if (line.includes("Starting TLD")) el.style.color = "#4ec9b0";
+      logBox.appendChild(el);
+    });
+
+    if (autoScroll.checked) {
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+  }
+
+  function poll() {
+    fetch(STATUS_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (job) {
+        updateBadge(job.status);
+
+        // Progress bar
+        const pct = job.total_tlds > 0
+          ? Math.round(((job.tld_index) / job.total_tlds) * 100)
+          : 0;
+        const displayPct = job.status === "done" ? 100 : pct;
+        tldBar.style.width = displayPct + "%";
+        tldBar.textContent = displayPct + "%";
+        tldCounter.textContent = (job.tld_index || 0) + " / " + job.total_tlds;
+
+        // Stats
+        statTld.textContent     = job.current_tld || "—";
+        statPage.textContent    = job.current_page || 0;
+        statDomains.textContent = job.domains_found || 0;
+
+        // Log
+        renderLog(job.log || []);
+
+        // Terminal states
+        if (job.status === "done") {
+          tldBar.classList.remove("progress-bar-animated", "progress-bar-striped");
+          tldBar.classList.add("bg-success");
+          tldCounter.textContent = job.total_tlds + " / " + job.total_tlds;
+          statTld.textContent = "—";
+          divRunning.classList.add("d-none");
+          divDone.classList.remove("d-none");
+          document.getElementById("done-summary").textContent =
+            " " + (job.domains_inserted || 0) + " new domain(s) saved to database.";
+          return; // stop polling
+        }
+
+        if (job.status === "error") {
+          tldBar.classList.remove("progress-bar-animated");
+          tldBar.classList.add("bg-danger");
+          divRunning.classList.add("d-none");
+          divError.classList.remove("d-none");
+          document.getElementById("error-detail").textContent =
+            " " + (job.error || "Unknown error. Check server logs.");
+          return; // stop polling
+        }
+
+        pollTimer = setTimeout(poll, POLL_MS);
+      })
+      .catch(function (err) {
+        console.error("Status poll failed:", err);
+        pollTimer = setTimeout(poll, POLL_MS * 2);
+      });
+  }
+
+  // Kick off first poll
+  pollTimer = setTimeout(poll, 500);
+})();
+</script>
+{% endblock %}
